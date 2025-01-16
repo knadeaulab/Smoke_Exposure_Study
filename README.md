@@ -16,7 +16,7 @@ This repository provides the necessary R scripts, data, and intermediate files f
 - **Files/**
   - Metadata and additional CSV/Tab-delimited files for replication of results presented in this study.
 ## Instructions
-Th up-to-date instructions to downlaod associated raw/processed data and run each R script are available within the each R script.
+Th up-to-date instructions to download associated raw/processed data are available within the each R script.
 ## Contact
 For questions, please contact Abhinav Kaushik at akaushik [at] hsph.harvard.edu
 
