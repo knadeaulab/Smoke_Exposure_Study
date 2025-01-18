@@ -1,0 +1,21 @@
+GO	Description	Count	%	Log10(P)	Log10(q)
+C1527304	Allergic Reaction	24	8.60	-19.00	-15.00
+C0200638	Eosinophil count procedure	27	9.70	-11.00	-6.70
+C3495559	Juvenile arthritis	22	7.90	-9.60	-5.90
+C0264408	Childhood asthma	18	6.50	-9.30	-5.70
+C1445957	Serum total cholesterol measurement	22	7.90	-9.00	-5.40
+C0523829	Phosphatidylcholine measurement	5	1.80	-8.10	-4.60
+C0008313	Cholangitis, Sclerosing	13	4.70	-7.60	-4.20
+C0202117	Low density lipoprotein cholesterol measurement	20	7.20	-7.60	-4.20
+C0003872	Arthritis, Psoriatic	19	6.80	-7.30	-4.10
+C0023508	White Blood Cell Count procedure	23	8.30	-7.00	-3.80
+C0428474	Serum LDL cholesterol measurement	14	5.00	-6.60	-3.50
+C0200641	Blood basophil count (lab test)	14	5.00	-6.60	-3.50
+C0020676	Hypothyroidism	21	7.60	-6.50	-3.40
+C0029925	Ovarian Carcinoma	19	6.80	-6.10	-3.10
+C3714514	Infection	18	6.50	-6.10	-3.00
+C0038013	Ankylosing spondylitis	22	7.90	-6.10	-3.00
+C2607914	Allergic rhinitis (disorder)	17	6.10	-6.00	-3.00
+C3469186	HEMOCHROMATOSIS, TYPE 1	8	2.90	-6.00	-3.00
+C4528257	Corpuscular Hemoglobin Concentration Mean	16	5.80	-6.00	-3.00
+C0202236	Triglycerides measurement	19	6.80	-5.90	-2.90

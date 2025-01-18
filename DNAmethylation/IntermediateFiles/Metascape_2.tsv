@@ -1,0 +1,21 @@
+GO	Description	Count	%	Log10(P)	Log10(q)
+C0200638	Eosinophil count procedure	81	11.00	-36.00	-31.00
+C1527304	Allergic Reaction	44	6.10	-29.00	-25.00
+C0200641	Blood basophil count (lab test)	40	5.50	-19.00	-16.00
+C0741260	Adult onset asthma	16	2.20	-14.00	-10.00
+C0023508	White Blood Cell Count procedure	52	7.20	-13.00	-9.00
+C4528257	Corpuscular Hemoglobin Concentration Mean	38	5.30	-12.00	-8.60
+C0264408	Childhood asthma	31	4.30	-11.00	-7.30
+C0149782	Squamous cell carcinoma of lung	48	6.60	-11.00	-7.20
+C3495559	Juvenile arthritis	38	5.30	-11.00	-7.20
+C0042900	Vitiligo	34	4.70	-9.80	-6.40
+C0008312	Primary biliary cirrhosis	37	5.10	-9.30	-6.00
+C2607914	Allergic rhinitis (disorder)	35	4.80	-9.00	-5.70
+C0020676	Hypothyroidism	42	5.80	-8.90	-5.60
+C0018213	Graves Disease	40	5.50	-8.50	-5.20
+C0008074	Child Development Disorders, Pervasive	20	2.80	-8.40	-5.20
+C0035242	Respiratory Tract Diseases	21	2.90	-7.90	-4.70
+C3840565	Autoimmune thyroid disease (AITD)	17	2.40	-7.70	-4.60
+C0428883	Diastolic blood pressure	35	4.80	-7.60	-4.50
+C0008313	Cholangitis, Sclerosing	20	2.80	-7.50	-4.50
+C0032181	Platelet Count measurement	24	3.30	-7.50	-4.50
