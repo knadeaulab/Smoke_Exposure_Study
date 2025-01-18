@@ -1,0 +1,18 @@
+GO	Description	Count	%	Log10(P)	Log10(q)
+C1527304	Allergic Reaction	9	9	-7.70	-3.20
+C0023508	White Blood Cell Count procedure	13	13	-6.40	-2.20
+C0200638	Eosinophil count procedure	12	12	-6.10	-2.00
+C2677123	COLORECTAL CANCER, SUSCEPTIBILITY TO, 3	6	6	-4.70	-1.10
+C1837315	COLORECTAL CANCER, SUSCEPTIBILITY TO, 1	6	6	-4.70	-1.10
+C2675481	COLORECTAL CANCER, SUSCEPTIBILITY TO, 10	6	6	-4.70	-1.10
+C3554460	COLORECTAL CANCER, SUSCEPTIBILITY TO, 12	6	6	-4.70	-1.10
+C0346629	Malignant neoplasm of large intestine	6	6	-4.60	-1.10
+C0032181	Platelet Count measurement	7	7	-4.50	-1.10
+C0200641	Blood basophil count (lab test)	7	7	-4.50	-1.10
+C0008313	Cholangitis, Sclerosing	6	6	-4.40	-1.10
+C4528257	Corpuscular Hemoglobin Concentration Mean	8	8	-4.20	-0.99
+C0333983	Hyperplastic Polyp	6	6	-4.20	-0.99
+C0264408	Childhood asthma	7	7	-4.20	-0.99
+C1384670	Single umbilical artery	3	3	-4.00	-0.85
+C2607914	Allergic rhinitis (disorder)	8	8	-3.90	-0.83
+C1519680	Tumor Immunity	7	7	-3.90	-0.80
