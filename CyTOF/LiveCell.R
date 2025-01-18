@@ -1,0 +1,394 @@
+setwd("/Users/abk347/Library/CloudStorage/OneDrive-HarvardUniversity/FF_integrative/CyTOF/Version-3")
+library(patchwork)
+library(Seurat)
+library(MAST)
+library(FlowSOM)
+library(flowCore)
+library(flowViz)
+library(flowStats)
+library(pheatmap)
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+library(mclust)
+library(Seurat)
+library(umap)
+library(Biobase)
+library(preprocessCore)
+
+set.seed(123)
+dir.create("Data")
+
+###########################################################################################
+## Download Live cell FCS files from Harvard Dataverse Repository in the 'Data' Directory #
+## URL: https://doi.org/10.7910/DVN/5PWZJM,
+###########################################################################################
+
+md = read.csv("Files/FileInfo.csv") 
+md$Fpath = paste("Data/", md$FileName, sep="")
+finalSamples = c("1294","1804","2765","2766","5023","5024","5865","5866","FF-024","WF046","WF135","FF-013",
+  "WF034","FF-035","FF-022","WF008","WF055","WF045","WF128","WF110","WF081","FF-052","FF-023",
+  "WF015","WF057","FF-045","WF023","WF002","WF005","WF042","WF051","WF094","WF102","WF120",
+  "FF-042","FF-026","FF-027","FF-028","FF-029","FF-031","FF-033","FF-041","FF-043","FF-016",
+  "FF-018","FF-020","FF-021","WF116","FF-008","FF-014","FF-019","FF-038","W0043B","WF066","W0050A",
+  "WF006","W0053A","WF069","WF025","WF138")
+md = dplyr::filter(md, PPID %in% finalSamples & Internal_control!= "IC")
+
+
+color_conditions <- c('#4363d8','#f58231')
+names(color_conditions) <- levels(factor(md$Group))
+
+###########################
+#### Reading FCS files ####
+###########################
+cofactor = 5
+ExpMatrix = list() ## rbinding in for loop can be slow
+IDs = list()
+flowframes= list() 
+for (j in 1:nrow(md)){
+  message(j)
+  fcs_raw <- read.flowSet(as.character(md$Fpath[j]), transformation = FALSE, truncate_max_range = FALSE)
+  lm = c("HLA.DR", "CD123", "CD11c","CD16", "CD3", "CD4", "CD45RA",
+         "TCRgd", "CD66b", "CD25", "CD56", "CD8a", "CD28","CD14", "CD127","CD19")
+  fm  = c("CD27","CD154", "CD294","CD185", "CD62L", "CD183", "CD194", "CD196", "CD197", "CD195","CD279",
+          "CXCR5","CXCR3","CCR4","CCR6","CCR7","CCR5","PD.1", "CRTH2",
+          "79Br","81Br","209Bi","204Pb", "206Pb", "208Pb","196Hg", "198Hg", "202Hg","182W","184W",
+          "186W","180Ta", "181Ta", "121Sb", "123Sb","114Cd", "112Cd","110Cd","106Cd", "108Cd") ## includes both proteisn and toxic metals
+
+  aliases <- c(
+    "CD294" = "CRTH2",
+    "CD185" = "CXCR5",
+    "CD183" = "CXCR3",
+    "CD194" = "CCR4",
+    "CD196" = "CCR6",
+    "CD195" = "CCR5",
+    "CD279" = "PD.1",
+    "CD197" = "CCR7"
+  )
+
+  panel_fcs <- pData(parameters(fcs_raw[[1]])) ## getting the meta-data from FCS files object
+  panel_fcs$desc = gsub("_HM","",panel_fcs$desc)
+
+  for (i in 1:nrow(panel_fcs)) {
+    if (is.na(panel_fcs[i,]$desc))
+    {
+      panel_fcs[i,]$desc = panel_fcs[i,]$name ## removing all NAs for discription and adding channel name to it
+    }
+  }
+  panel_fcs$desc = gsub(pattern = ".*_", replacement = "", panel_fcs$desc)## to clean the marker name e.g. I want to have marker name as CD8 or CD45
+  panel_fcs$desc = gsub(pattern = "-", replacement = ".", panel_fcs$desc)
+  panel_fcs <- panel_fcs %>% mutate(desc = ifelse(desc %in% names(aliases), aliases[desc], desc))
+
+  panel_fcs$desc[panel_fcs$name=="Lu175Di"] <- "CD14"
+  panel_fcs$desc = gsub("TGRgd","TCRgd",panel_fcs$desc)
+  panel_fcs$desc = gsub("CD8A","CD8a",panel_fcs$desc)
+  #check if all has been named correctly or not
+  lineage_markers = intersect(lm,panel_fcs$desc)
+  functional_markers = intersect(panel_fcs$desc, fm)
+  all(lineage_markers %in% panel_fcs$desc) ## if TRUE then all are there
+  all(functional_markers %in% panel_fcs$desc) ## if TRUE then all are there
+  markers <- panel_fcs$name ## this should match with column name of FCS flowset; i.e. for each column name we have a coreesponding marker name
+  names(markers) = as.character(panel_fcs$desc)
+  markers = data.frame(Marker = names(markers), Metal = as.character(markers))
+  markers = rbind(markers, data.frame(Marker = "CD14", Metal = 'Lu175Di'))
+  df <- asinh(fsApply(fcs_raw, exprs)/ cofactor)
+  mm = match(colnames(df), markers$Metal)
+  colnames(df) = markers$Marker[mm]
+  df = df[,c(lineage_markers, functional_markers)]
+  IDs[[paste(j)]] = factor(rep(md$SampleID[j], nrow(df))) ## unique sample ID )
+  #ExpMatrix[[paste(j)]] = df
+  fcs.input <- new("flowFrame", exprs=as.matrix(df))
+  flowframes[[paste(j)]] = fcs.input
+}
+flow_set_1 <- flowSet(flowframes)
+ExpressionMatrix = fsApply(flow_set_1, exprs)
+PIDs = do.call(c, IDs)
+
+##################################################
+############ Flow Som clustering   ###############
+#################################################
+subSample <- function(sample_ids,ncount){ 
+  inds <- split(1:length(sample_ids), sample_ids) 
+  ncells <- pmin(table(sample_ids), ncount) ## number of cells to downsample per FCS for clsuetering 
+  fsom_inds <- lapply(names(inds),
+                      function(i){
+                        s <- sample(inds[[i]], ncells[i], replace = FALSE) ## randomly choosing 10000 cells from each sample
+                      })
+  fsom_inds <- unlist(fsom_inds) ## 50000 cells from each sample randomly removing rest of the cells 
+  return(fsom_inds) 
+}
+idx =  which(PIDs %in% md$SampleID)
+expr2 = ExpressionMatrix[idx,]
+rownames(expr2) = 1:length(idx)
+sampleIDs00 = as.character(PIDs[idx])
+idx = subSample(sampleIDs00,80000)
+data = expr2[idx,]
+sampleIDs = as.character(sampleIDs00[idx])
+
+lm = c("CD123", "CD11c","CD16", "CD3", "CD4", "CD45RA","TCRgd", "CD66b", "CD25", "CD56", "CD8a", "CD28","CD14", "CD127","CD19")
+lineage_markers = intersect(lm, colnames(data))
+
+message("creating a flowset..")
+fcs.input <- new("flowFrame", exprs=as.matrix(data[,lineage_markers]))
+message("Running FlowSOM..")
+flowSOM.res <- FlowSOM(fcs.input, colsToUse = lineage_markers, scale = FALSE ,nClus=10) ## 10 clusters
+message("generating Meta-Clusters..")
+labels <- GetMetaclusters(flowSOM.res)
+
+data = as.data.frame(data)
+data$cluster = labels
+data$sample_id = sampleIDs
+
+### Heatmap ###
+lm = c("CD123", "CD11c","CD16", "CD3", "CD4", "CD45RA","TCRgd", "CD66b", "CD25", "CD56", "CD8a", "CD28","CD14", "CD127","CD19")
+pdf7 = as.data.frame(data[,c(lm,"cluster")] %>% dplyr::group_by(cluster) %>% summarise_all(median))
+nam = data[,c(lm,"cluster")] %>% dplyr::group_by(cluster) %>% summarize(count = n(), proportion = (n() / nrow(data))*100)
+rownames(pdf7) = paste(rownames(pdf7), " (", format(nam$proportion, digits=2) , "%)", sep="")
+pdf("Live_cell_FlowSOM_clusters_Heatmap.pdf", width = 8, height = 5)
+pheatmap(pdf7[,lm], cluster_rows = F, cluster_cols = F,
+         color = colorRampPalette(c("white", "#434CC3", "navy", "orange", "firebrick3"))(50))
+dev.off()
+
+
+############################################
+### Proportion of cells in each cluster ####
+############################################
+
+md2 = dplyr::filter(md, Ignore == "No" )
+tcells = as.data.frame(table(data$sample_id))
+prop = as.data.frame(table(data$sample_id, data$cluster))
+colnames(prop) = c("PID", "ClusterNumber", "count")
+mm = match(prop$PID, tcells$Var1)
+prop$total = tcells$Freq[mm]
+prop$Prop = (prop$count/prop$total) * 100
+
+mm = match(prop$PID, md2$SampleID)
+prop$Group = md2$Group[mm]
+prop$Batch = md2$Batch[mm]
+
+out_prop = data.frame()
+bplots = list()
+for(clus in unique(prop$ClusterNumber)){
+  ggdf = dplyr::filter(prop,ClusterNumber == clus)
+  ggdf$group2 = ifelse(ggdf$Group == "nonSE", 0 , 1)
+  ggdf$Group = factor(ifelse(ggdf$Group == "nonSE","nonSE", "SE"), levels = c("nonSE","SE"))
+
+  mod = glm(Group~Prop + Batch, data = ggdf, family = binomial)
+  out = summary(mod)
+  Pvalue = as.numeric(out$coefficients["Prop",4])
+  out = data.frame(pval = Pvalue, cluster = clus)
+  out_prop = rbind(out, out_prop)
+  
+  gg = ggplot(ggdf, aes(x = Group, y = Prop, color = Group)) + 
+    geom_boxplot(position = position_dodge(width = 0.85), outlier.shape = NA) +
+    geom_point(aes(color = Group),position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.7), size = 2, alpha = 0.8) +
+    scale_fill_manual(values = c('#4363d8','#f58231',"black")) +
+    scale_color_manual(values = c('#4363d8','#f58231')) + theme_bw(base_size = 16) +
+    xlab(label = "" ) + ylab(label = "% Total live cells") +
+    theme(strip.background = element_rect(fill = "white"),
+          strip.text = element_text(size = 14), 
+          legend.position = "none")  +
+    labs(subtitle = clus) 
+  
+  bplots[[clus]]= gg
+}
+
+
+pdf("Live_cell_Prop_BoxPlot.pdf", width = 10, height = 11)
+wrap_plots(plotlist = bplots, ncol = 6, nrow = 3)
+dev.off()
+
+
+#######################################
+######## Toxic metal analysis #########
+#######################################
+# Preprocessing 
+data$cluster = "Live"
+mm = match(data$SampleID, md$SampleID)
+Group = md$Group[mm]
+SE = data[Group == "SE", ]
+nonSE = data[Group == "nonSE", ]
+clusters = c(SE$cluster, nonSE$cluster)
+SID = c(SE$SampleID, nonSE$SampleID)
+mm = match(SID, md$SampleID)
+data$Batch  = md$Batch[mm]
+targetCls = setdiff(colnames(data),c("SampleID","cluster","Batch"))
+normalized_dataSE <- as.data.frame(normalize.quantiles(as.matrix(SE[targetCls])))
+normalized_datanonSE <- as.data.frame(normalize.quantiles(as.matrix(nonSE[targetCls])))
+colnames(normalized_dataSE) = targetCls
+colnames(normalized_datanonSE) = targetCls
+data = rbind(normalized_dataSE,normalized_datanonSE)
+data$sample_id = SID
+data$cluster = clusters
+rm(SE, nonSE)
+
+## Box-plots ##
+extract_key_cells <- function(data, keymarkers=fm, clus, md){
+  idx = grep(pattern = "sample", colnames(data), ignore.case = T)
+  colnames(data)[idx] = "sample_id"
+  hcless = dplyr::filter(data, cluster %in% clus)
+  mplots = list()
+  BTplot = list()
+  
+  msioutput = data.frame()
+  tempout = data.frame()
+  tmpout = data.frame()
+  for (mark in keymarkers){
+    message(mark)
+    X = as.matrix(hcless[mark])
+    quan = 0.95
+    tmpdf1 = data.frame(Value = X, sample_id = hcless$sample_id)
+    colnames(tmpdf1) = c("Value", "sample_id")
+    SID = tmpdf1$sample_id
+    quantiles_by_sample <- tmpdf1 %>% group_by(sample_id) %>% 
+      summarise(quantile_90 = quantile(Value, quan, na.rm = TRUE))
+    tmpdf1$sample_id = SID
+    # Filter for values that exceed the quantile for each sample id sepratelt 
+    prop <- tmpdf1 %>% left_join(quantiles_by_sample, by = "sample_id") %>%
+      group_by(sample_id) %>% summarise(count_above_90th_quantile = sum(Value > quan, na.rm = TRUE) )
+    prop$Batch=NULL
+    # Step 2: Filter rows where the 'marker' value exceeds the quantile for its batch_id
+    tmpdf2 <- tmpdf1 %>% left_join(quantiles_by_sample, by = "sample_id") %>% dplyr::filter(Value > quantile_90)
+    tmpdf2$quantile_90=NULL
+    tmpdf2$Batch=NULL
+    colnames(prop) = c("sample_id", "Freq")
+    Total =  as.data.frame(table(hcless$sample_id))
+    mm = match(prop$sample_id, Total$Var1)
+    prop$Total = Total$Freq[mm]
+    prop$Prop = (prop$Freq/prop$Total)*100
+    colnames(prop)[1] = c("sample_id")
+    mm = match(prop$sample_id, md2$SampleID)
+    prop$Group = md2$Group[mm]
+    prop$Group = factor(prop$Group, levels = c("nonSE", "SE"))
+    prop$Batch = md2$Batch[mm]
+    a = table(prop$Group)[1]
+    b = table(prop$Group)[2]
+    if(b > 8){ ## if there are sufficient values in SE group 
+      if (a == 0){ ## if there is no finding in nonSE add dummy data 
+        tmp = data.frame(sample_id = "XXX", Freq = 0, Total = 0, Prop = 0, Group = "nonSE", Batch = "R1")
+        prop = rbind(prop, tmp)
+      }
+      ggdf = prop
+      ggdf$Group = ifelse(ggdf$Group == "nonSE", "nonSE", "SE")
+      ggdf$Marker = mark
+      
+      ggdf$Group = factor(ggdf$Group, levels = c("nonSE", "SE"))
+      tt = glm(Group~Prop + Batch, data = ggdf, family = binomial)
+      out = summary(tt)
+      pval = as.numeric(out$coefficients["Prop",4])
+      
+      gg = ggplot(ggdf, aes(x = Group, y = Prop, color = Group)) +
+        geom_boxplot(position = position_dodge(width = 0.85), outlier.shape = NA) +
+        geom_point(aes(color = Group),position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.7), size = 2, alpha = 0.8) +
+        scale_fill_manual(values = c('#4363d8','#f58231',"black")) +
+        scale_color_manual(values = c('#4363d8','#f58231')) + theme_bw(base_size = 16) +
+        xlab(label = "" ) + ylab(label = "% cluster cells") +
+        theme(strip.background = element_rect(fill = "white"),
+              strip.text = element_text(size = 14),
+              legend.position = "none")  +  facet_wrap(~Marker) + labs(subtitle = paste(pval,"|",clus))
+      
+      if(pval < 0.85){
+        mplots[[paste(mark)]]= gg
+      }
+      
+      message("Trying median signal intensity...")
+      #####. Median signal intensity ###
+      colnames(tmpdf2) = c("Marker","sample_id")
+      mm = match(tmpdf2$sample_id, md2$SampleID)
+      tmpdf2$Group = md2$Group[mm]
+      tmpdf2$Batch = md2$Batch[mm]
+      tmpdf2 = tmpdf2 %>% dplyr::group_by(Group,Batch,sample_id) %>% summarize(across(where(is.numeric), median, na.rm = TRUE))
+      tg = length(unique(as.character(tmpdf2$Group)))
+      if ((sum(tmpdf2$Marker) > 0.1) & (tg == 2)) {
+        tmpdf2$Group2 = ifelse(tmpdf2$Group=="SE", 1, 0)
+        
+        tt = glm(Group2~Marker + Batch, data = tmpdf2, family = binomial)
+        out = summary(tt)
+        Pvalue = as.numeric(out$coefficients["Marker",4])
+        out = data.frame(pval = Pvalue, cluster = clus, Marker = mark)
+        tmpout = rbind(tmpout, out)
+        
+        gg0 = ggplot(tmpdf2, aes(x = Group, y = Marker, color = Group)) + 
+          geom_boxplot(position = position_dodge(width = 0.85), outlier.shape = NA) +
+          geom_point(aes(color = Group),position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.7), size = 2, alpha = 0.8) +
+          scale_fill_manual(values = c('#4363d8','#f58231',"black")) +
+          scale_color_manual(values = c('#4363d8','#f58231')) + theme_bw(base_size = 16) +
+          xlab(label = "" ) + ylab(label = "MSI") +
+          theme(strip.background = element_rect(fill = "white"),
+                strip.text = element_text(size = 14), 
+                legend.position = "none")  +
+          labs(title = clus, subtitle = mark) 
+        
+        tt = lm(Marker~Group, data = tmpdf2)
+        out = summary(tt)
+        pvalue0 = as.data.frame(out$coefficients)[2,4]
+        if(is.na(pvalue0)){pvalue0 = 1}
+        if(is.na(Pvalue)){Pvalue = 1}
+        if ((pvalue0 < 0.80)|(Pvalue < 0.80)){
+          BTplot[[paste(clus, mark)]]= gg0
+        }
+      }
+    }
+  }
+  return(list(mplots,BTplot))
+}
+fm = intersect(toxicMetals, colnames(data))
+out = extract_key_cells(data, fm , clus = "Live", md)
+filename = paste("LiveMetal_", clus, "_metal_prop.pdf", sep="")
+pdf(filename, width = 1.6, height = 3.5)
+for (plt in out[[1]]){print(plt)}
+dev.off()
+filename = paste("LiveMetal_", clus, "_metal_MSI.pdf", sep="")
+pdf(filename, width = 1.6, height = 3.5)
+for (plt in out[[2]]){print(plt)}
+dev.off()
+
+## seurat analysis ##
+extract_key_cells_seuret <- function(data, keymarkers, clus, md2){
+  idx = grep(pattern = "sample", colnames(data), ignore.case = T)
+  colnames(data)[idx] = "sample_id"
+  hcless = dplyr::filter(data, cluster %in% clus)
+  keymarkers = intersect(colnames(hcless), keymarkers)
+  Mdata = as.data.frame(t(hcless[,keymarkers]))
+  colnames(Mdata) = rownames(hcless)
+  seurat_object <- CreateSeuratObject(counts = Mdata)
+  # Adding a new assay with additional data forms
+  seurat_object[["Abseq"]] <- CreateAssayObject(
+    data = as.matrix(Mdata),  # If normalized data available
+    scale.data = as.matrix(Mdata)  # If scaled data available
+  )
+  DefaultAssay(seurat_object) <- "Abseq" 
+  seurat_cell_names <- colnames(seurat_object)
+  mm = match(hcless$sample_id, md2$SampleID)
+  hcless$Group = md2$Group[mm]
+  hcless$Batch = md2$Batch[mm]
+  metadata <- data.frame(
+    CellID = rownames(hcless),
+    Group =  hcless$Group,
+    Batch = hcless$Batch)
+  seurat_object <- AddMetaData(seurat_object, metadata)
+  Idents(seurat_object) <- seurat_object@meta.data$Group
+  seurat_object <- SetIdent(seurat_object, value = "Group") 
+  
+  # Example of differential expression analysis using MAST
+  differential_markers <- FindMarkers(
+    seurat_object,
+    ident.1 = "nonSE",
+    ident.2 = "SE",
+    test.use = "MAST",
+    latent.vars = "Batch"
+  )
+  
+  return(differential_markers)
+}
+out_fdr = extract_key_cells_seuret(data, fm, clus="Live", md)
+
+
+
+
+
+
+
+
+
+
