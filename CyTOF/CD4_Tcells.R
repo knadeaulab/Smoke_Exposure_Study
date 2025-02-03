@@ -13,6 +13,7 @@ library(MAST)
 library(umap)
 library(Biobase)
 
+dir.create("Data")
 
 ###################################################################################################
 ## Download CD4.Rdata and CD4cells_HandGated_subsets.Rdata files from Harvard Dataverse Repository ###
