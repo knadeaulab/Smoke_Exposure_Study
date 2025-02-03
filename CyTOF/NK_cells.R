@@ -13,6 +13,7 @@ library(MAST)
 library(umap)
 library(Biobase)
 
+dir.create("Data")
 
 ############################################################################################
 ## Download NKcells_Handgated_subsets.Rdata file from Harvard Dataverse Repository #########
