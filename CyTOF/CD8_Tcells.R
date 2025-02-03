@@ -13,6 +13,8 @@ library(MAST)
 library(umap)
 library(Biobase)
 
+dir.create("Data")
+
 ###################################################################################################
 ## Download CD8.Rdata and CD8_T_HandGated_subsets.RData files from Harvard Dataverse Repository ###
 ## (URL: https://doi.org/10.7910/DVN/5PWZJM) in the 'Data' Directory #
