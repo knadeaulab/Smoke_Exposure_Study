@@ -1,4 +1,3 @@
-setwd("/Users/abk347/Library/CloudStorage/OneDrive-HarvardUniversity/FF_integrative/CyTOF/Version-3")
 library(patchwork)
 library(Seurat)
 library(MAST)
