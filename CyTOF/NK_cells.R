@@ -144,8 +144,20 @@ extract_key_cells_seuret <- function(data, keymarkers, clus, md2, toxicMetals){
   return(differential_markers)
 }
 
-
 ## CD3 cell count per sample ##
+colnames(cd3) = c("RegEx", "count")
+tmpdf = data.frame()
+for(pattern in cd3$RegEx){
+  indx = grep(pattern, md$Filename, ignore.case = TRUE)
+  fn = md$FileName[indx]
+  row = md[indx,]
+  tmp = data.frame(pattern, row)
+  tmpdf = rbind(tmp,tmpdf)
+}
+mm = match(cd3$RegEx,tmpdf$pattern)
+cd3 = cbind(cd3, tmpdf[mm,])
+cd3$SID = cd3$SampleID
+
 prop0 = as.data.frame(table(NKcd56_Exp_matrix0$SampleID))
 colnames(prop0) = c("SID","count")
 prop0$CellType = "CD56bright"
