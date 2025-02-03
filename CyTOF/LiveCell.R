@@ -52,7 +52,7 @@ for (j in 1:nrow(md)){
   fm  = c("CD27","CD154", "CD294","CD185", "CD62L", "CD183", "CD194", "CD196", "CD197", "CD195","CD279",
           "CXCR5","CXCR3","CCR4","CCR6","CCR7","CCR5","PD.1", "CRTH2",
           "79Br","81Br","209Bi","204Pb", "206Pb", "208Pb","196Hg", "198Hg", "202Hg","182W","184W",
-          "186W","180Ta", "181Ta", "121Sb", "123Sb","114Cd", "112Cd","110Cd","106Cd", "108Cd") ## includes both proteisn and toxic metals
+          "186W","180Ta", "181Ta", "121Sb", "123Sb","114Cd", "112Cd","110Cd","106Cd", "108Cd") ## includes both protein and toxic metals
 
   aliases <- c(
     "CD294" = "CRTH2",
