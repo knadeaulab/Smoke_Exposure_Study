@@ -21,7 +21,7 @@ dir.create("Data")
 ###########################################################################################
 
 md = read.csv("Files/FileInfoCD8.csv") ## Sample annotation 
-cd3 = read.csv("Files/CD3Pos_cell_counts.csv") ## CD3- cell count per sample 
+cd3 = read.csv("Files/CD3Pos_cell_counts.csv") ## CD3+ cell count per sample 
 finalSamples = c("1294","1804","2765","2766","5023","5024","5865","5866","FF-024","WF046","WF135","FF-013",
                  "WF034","FF-035","FF-022","WF008","WF055","WF045","WF128","WF110","WF081","FF-052","FF-023",
                  "WF015","WF057","FF-045","WF023","WF002","WF005","WF042","WF051","WF094","WF102","WF120",
