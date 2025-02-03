@@ -32,8 +32,9 @@ finalSamples = c("1294","1804","2765","2766","5023","5024","5865","5866","FF-024
 toxicMetals= c("79Br","81Br","209Bi","204Pb", "206Pb", "208Pb","196Hg", "198Hg", "202Hg","182W","184W", 
                "186W","180Ta", "181Ta", "121Sb", "123Sb","114Cd", "112Cd","110Cd","106Cd", "108Cd")
 fm = c("CD27","CD28","CD154", "CD294","CD185", "CD62L", "CD183", "CD194", "CD196", "CD197", "CD195","CD279",
-                       "CXCR5","CXCR3","CCR4","CCR6","CCR7","CCR5","PD.1", "CRTH2","79Br")
-functional_markers = c(fm,toxicMetals)
+        "CXCR5","CXCR3","CCR4","CCR6","CCR7","CCR5","PD.1", "CRTH2")
+
+functional_markers = unique(c(fm,toxicMetals))
 
 load("Data/CD4.Rdata")
 load("Data/CD4cells_HandGated_subsets.Rdata")
