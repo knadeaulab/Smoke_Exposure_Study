@@ -1,0 +1,86 @@
+Filename,SampleID,RegEx,Internal_control,Batch,PPID,Group,Ignore
+export_export_WF_120_C_03172022_03_myeloid cells.fcs,WF120,WF_120,Other,R1,UA0789,nonSE,No
+export_export_WF_102_C_20220318_04_myeloid cells.fcs,WF102,WF_102,Other,R1,FF-039,SE,No
+export_export_WF_91_C_20220318_04_myeloid cells.fcs,WF091,WF_91,Other,R1,WF042,nonSE,No
+export_export_WF_005_C_03172022_03_myeloid cells.fcs,WF005,WF_005,Other,R1,FF-042,SE,No
+export_export_UA_1000_C_03172022_03_myeloid cells.fcs,UA1000,UA_1000,Other,R1,FF-041,SE,No
+export_export_UA_955_C_20220318_04_myeloid cells.fcs,UA0955,UA_955,Other,R1,FF-029,SE,No
+export_export_UA_937_C_20220318_04_myeloid cells.fcs,UA0937,UA_937,Other,R1,FF-028,SE,No
+export_export_FF_Tube23_C_05252022_03_myeloid cells.fcs,IC,FF_Tube23_C_05252022_03,Other,R2,WF120,nonSE,No
+export_export_FF_Tube22_C_02272022_02_myeloid cells.fcs,WF051,FF_Tube22_C_02272022_02,Other,R2,WF102,nonSE,No
+export_export_FF_Tube21_C_02272022_02_myeloid cells.fcs,WF116,FF_Tube21_C_02272022_02,Other,R2,WF091,nonSE,No
+export_export_FF_Tube20_C_05262022_03_myeloid cells.fcs,WF094,FF_Tube20_C_05262022_03,Other,R2,WF005,nonSE,No
+export_export_FF_Tube19_C_02272022_02_myeloid cells.fcs,WF023,FF_Tube19_C_02272022_02,Other,R2,UA1000,nonSE,No
+export_export_FF_Tube18_C_05262022_03_myeloid cells.fcs,WF002,FF_Tube18_C_05262022_03,Other,R2,UA0955,nonSE,No
+export_export_FF_Tube17_C_05262022_04_myeloid cells.fcs,UA0974,FF_Tube17_C_05262022_04,Other,R2,UA0937,nonSE,No
+export_export_FF_Tube16_C_05262022_03_myeloid cells.fcs,UA0938,FF_Tube16_C_05262022_03,IC,R1,IC,IC,Yes
+export_export_FF_Tube15_C_05252022_03_myeloid cells.fcs,UA0929,FF_Tube15_C_05252022_03,Other,R1,WF051,nonSE,No
+export_export_FF_Tube14_C_05252022_03_myeloid cells.fcs,UA0789,FF_Tube14_C_05252022_03,Other,R1,WF116,SE,No
+export_export_FF_Tube13_C_05262022_04_myeloid cells.fcs,FF-039,FF_Tube13_C_05262022_04,IC,R1,WF094,nonSE,Yes
+export_export_FF_Tube12_C_02272022_02_myeloid cells.fcs,WF042,FF_Tube12_C_02272022_02,Other,R1,WF023,nonSE,No
+export_export_FF_Tube11_E_02272022_02_myeloid cells.fcs,FF-042,FF_Tube11_E_02272022_02,Other,R1,WF002,nonSE,No
+export_export_FF_Tube10_E_02272022_02_myeloid cells.fcs,FF-041,FF_Tube10_E_02272022_02,Other,R1,UA0974,nonSE,No
+export_export_FF_Tube09_E_05262022_03_myeloid cells.fcs,FF-029,FF_Tube09_E_05262022_03,Other,R1,UA0938,nonSE,No
+export_export_FF_Tube08_C_05252022_03_myeloid cells.fcs,FF-028,FF_Tube08_C_05252022_03,Other,R1,UA0929,nonSE,No
+export_export_FF_Tube07_E_05262022_03_myeloid cells.fcs,FF-027,FF_Tube07_E_05262022_03,Other,R1,FF-027,SE,No
+export_export_FF_Tube06_E_02272022_02_myeloid cells.fcs,FF-026,FF_Tube06_E_02272022_02,Other,R1,FF-026,SE,No
+export_export_FF_Tube05_E_05252022_03_myeloid cells.fcs,FF-019,FF_Tube05_E_05252022_03,Other,R1,FF-019,SE,No
+export_export_FF_Tube04_E_05252022_03_myeloid cells.fcs,FF-018,FF_Tube04_E_05252022_03,Other,R1,FF-018,SE,No
+export_export_FF_Tube03_E_05262022_03_myeloid cells.fcs,FF-016,FF_Tube03_E_05262022_03,Other,R1,FF-016,SE,No
+export_export_FF_Tube02_E_05252022_2_03_myeloid cells.fcs,FF-011,FF_Tube02_E_05252022_2_03,Other,R1,FF-011,SE,No
+export_export_FF_Tube1_E_02272022_02_myeloid cells.fcs,FF-008,FF_Tube1_E_02272022_02,Other,R1,FF-008,SE,No
+export_export_FF_44_E_03172022_03_myeloid cells.fcs,FF-044,FF_44_E_03172022_03,Other,R2,FF-044,SE,No
+export_export_FF_43_C_20220318_04_myeloid cells.fcs,FF-043,FF_43_C_20220318_04,Other,R2,FF-043,SE,No
+export_export_FF_38_E_03172022_03_myeloid cells.fcs,FF-038,FF_38_E_03172022_03,Other,R2,FF-038,SE,No
+export_export_FF_33_E_20220318_04_myeloid cells.fcs,FF-033,FF_33_E_20220318_04,IC,R2,FF-033,SE,Yes
+export_export_FF_31_E_20220318_04_myeloid cells.fcs,FF-031,FF_31_E_20220318_04,Other,R2,FF-031,SE,No
+export_export_FF_21_E_03172022_03_myeloid cells.fcs,FF-021,FF_21_E_03172022_03,Other,R2,FF-021,SE,No
+export_export_FF_20_E_20220318_04_myeloid cells.fcs,FF-020,FF_20_E_20220318_04,Other,R2,FF-020,SE,No
+export_export_FF_14_E_20220318_04_myeloid cells.fcs,FF-014,FF_14_E_20220318_04,Other,R2,FF-014,SE,No
+export_export_FF_012_E_03172022_03_myeloid cells.fcs,FF-012,FF_012_E_03172022_03,Other,R2,FF-012,SE,No
+export_export_FF_010_E_03172022_03_myeloid cells.fcs,FF-010,FF_010_E_03172022_03,Other,R2,FF-010,SE,No
+export_export_FF_05_E_20220318_04_myeloid cells.fcs,FF-005,FF_05_E_20220318_04,Other,R2,FF-005,SE,No
+export_250107_sample44_5865_1_1_myeloidcells.fcs,5865,250107_sample44_5865,Other,B5,5865,nonSE,No
+export_250107_sample43_WF138_1_1_myeloidcells.fcs,WF138,250107_sample43_WF138,Other,B5,WF138,nonSE,No
+export_250107_sample42_1804_1_1_myeloidcells.fcs,1804,250107_sample42_1804,Other,B5,1804,nonSE,No
+export_250107_sample41_WF025_1_1_myeloidcells.fcs,WF025,250107_sample41_WF025,Other,B5,WF025,nonSE,No
+export_250107_sample40_WF069_1_1_myeloidcells.fcs,WF069,250107_sample40_WF069,Other,B5,WF069,nonSE,No
+export_250107_sample39_2765_1_1_myeloidcells.fcs,2765,250107_sample39_2765,Other,B5,2765,nonSE,No
+export_250107_sample38_5024_1_1_myeloidcells.fcs,5024,250107_sample38_5024,Other,B5,5024,nonSE,No
+export_250107_sample37_W0053A_1_1_myeloidcells.fcs,W0053A,250107_sample37_W0053A,Other,B5,W0053A,nonSE,No
+export_250107_sample36_WF094_1_1_myeloidcells.fcs,36_WF094,250107_sample36_WF094,IC,B5,WF094,nonSE,Yes
+export_250107_sample35_FF033_1_1_myeloidcells.fcs,35_FF033,250107_sample35_FF033,IC,B5,FF-033,SE,Yes
+export_250107_sample34_WF006_1_1_myeloidcells.fcs,WF006,250107_sample34_WF006,Other,B4,WF006,nonSE,No
+export_250107_sample33_2766_1_1_myeloidcells.fcs,2766,250107_sample33_2766,Other,B4,2766,nonSE,No
+export_250107_sample32_5866_1_1_myeloidcells.fcs,5866,250107_sample32_5866,Other,B4,5866,nonSE,No
+export_250107_sample31_W0050A_1_1_myeloidcells.fcs,W0050A,250107_sample31_W0050A,Other,B4,W0050A,nonSE,No
+export_250107_sample30_WF066_1_1_myeloidcells.fcs,WF066,250107_sample30_WF066,Other,B4,WF066,nonSE,No
+export_250107_sample29_5023_1_1_myeloidcells.fcs,5023,250107_sample29_5023,Other,B4,5023,nonSE,No
+export_250107_sample28_W0043B_1_1_myeloidcells.fcs,W0043B,250107_sample28_W0043B,Other,B4,W0043B,nonSE,No
+export_250107_sample27_1294_1_1_myeloidcells.fcs,1294,250107_sample27_1294,Other,B4,1294,nonSE,No
+export_250107_sample26_WF094_1_1_myeloidcells.fcs,26_WF094,250107_sample26_WF094,IC,B4,WF094,nonSE,Yes
+export_250107_sample25_FF-033_1_1_myeloidcells.fcs,25_FF-033,250107_sample25_FF-033,IC,B4,FF-033,SE,Yes
+export_24_FF-045_SE_myeloidcells.fcs,FF-045,24_FF-045,Other,B3,FF-045,SE,No
+export_23_WF057_nonSE_myeloidcells.fcs,WF057,23_WF057,Other,B3,WF057,nonSE,No
+export_22_WF015_SE_myeloidcells.fcs,WF015,22_WF015,Other,B3,WF015,SE,No
+export_21_FF-023_SE_myeloidcells.fcs,FF-023,21_FF-023,Other,B3,FF-023,SE,No
+export_20_FF-052_SE_myeloidcells.fcs,FF-052,20_FF-052,Other,B3,FF-052,SE,No
+export_19_WF081_SE_myeloidcells.fcs,WF081,19_WF081,Other,B3,WF081,SE,No
+export_18_ICB_IC_myeloidcells.fcs,18_WF094,18_ICB_IC,IC,B3,WF094,nonSE,No
+export_17_ICA_IC_myeloidcells.fcs,17_FF-033,17_ICA_IC,IC,B3,FF-033,SE,No
+export_16_ICB_IC_myeloidcells.fcs,16_WF094,16_ICB_IC,IC,B2,WF094,nonSE,Yes
+export_15_ICA_IC_myeloidcells.fcs,15_FF-033,15_ICA_IC,IC,B2,FF-033,SE,Yes
+export_14_WF110_nonSE_myeloidcells.fcs,WF110,14_WF110,Other,B2,WF110,nonSE,No
+export_13_WF128_nonSE_myeloidcells.fcs,WF128,13_WF128,Other,B2,WF128,nonSE,No
+export_12_WF045_nonSE_myeloidcells.fcs,WF045,12_WF045,Other,B2,WF045,nonSE,No
+export_11_WF055_SE_myeloidcells.fcs,WF055,11_WF055,Other,B2,WF055,SE,No
+export_10_WF008_SE_myeloidcells.fcs,WF008,10_WF008,Other,B2,WF008,SE,No
+export_9_FF-022_SE_myeloidcells.fcs,FF-022,9_FF-022,Other,B2,FF-022,SE,No
+export_8_FF-035_SE_myeloidcells.fcs,FF-035,8_FF-035,Other,B1,FF-035,SE,No
+export_7_WF034_SE_myeloidcells.fcs,WF034,7_WF034,Other,B1,WF034,SE,No
+export_6_FF-013_SE_myeloidcells.fcs,FF-013,6_FF-013,Other,B1,FF-013,SE,No
+export_5_WF135_SE_myeloidcells.fcs,WF135,5_WF135,Other,B1,WF135,SE,No
+export_4_WF046_nonSE_myeloidcells.fcs,WF046,4_WF046,Other,B1,WF046,nonSE,No
+export_3_FF-024_SE_myeloidcells.fcs,FF-024,3_FF-024,Other,B1,FF-024,SE,No
+export_2_ICB_IC_myeloidcells.fcs,2_WF094,2_ICB_IC,IC,B1,WF094,nonSE,Yes
+export_1_ICA_IC_myeloidcells.fcs,1_FF-033,1_ICA_IC,IC,B1,FF-033,SE,Yes
