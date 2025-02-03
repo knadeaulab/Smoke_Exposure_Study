@@ -480,8 +480,8 @@ fm = intersect(functional_markers, colnames(MemoryCD8_Exp_matrix1))
 MemoryCD8_Exp_matrix1$cluster = "CD8mem"
 NaiveCD8_Exp_matrix1$cluster = "CD8naive"
 
-out2 = extract_key_cells(MemoryCD8_Exp_matrix1, fm , clus="CD8mem", md2)
-out3 = extract_key_cells(NaiveCD8_Exp_matrix1, fm , clus="CD8naive", md2)
+out2 = extract_key_cells(MemoryCD8_Exp_matrix1, fm , clus="CD8mem", md2, toxicMetals)
+out3 = extract_key_cells(NaiveCD8_Exp_matrix1, fm , clus="CD8naive", md2, toxicMetals)
 
 pdf("CD8_memory.pdf", width = 1.6, height = 3.5)
 for (plt in out2){print(plt)}
@@ -490,8 +490,8 @@ pdf("CD8_naive.pdf", width = 1.6, height = 3.5)
 for (plt in out3){print(plt)}
 dev.off()
 
-outMSI2 = MSI_analysis(MemoryCD8_Exp_matrix1, clus='CD8mem', fm, md2)
-outMSI3 = MSI_analysis(NaiveCD8_Exp_matrix1, clus='CD8naive', fm, md2)
+outMSI2 = MSI_analysis(MemoryCD8_Exp_matrix1, clus='CD8mem', fm, md2, toxicMetals)
+outMSI3 = MSI_analysis(NaiveCD8_Exp_matrix1, clus='CD8naive', fm, md2, toxicMetals)
 pdf("CD8_memory_MSI.pdf", width = 1.6, height = 3.5)
 for (plt in outMSI2){print(plt)}
 dev.off()
@@ -499,5 +499,5 @@ pdf("CD8_naive_MSI.pdf", width = 1.6, height = 3.5)
 for (plt in outMSI3){print(plt)}
 dev.off()
 
-out_surt2 = extract_key_cells_seuret(MemoryCD8_Exp_matrix1, fm, clus='CD8mem', md2)
-out_surt3 = extract_key_cells_seuret(NaiveCD8_Exp_matrix1, fm, clus='CD8naive', md2)
+out_surt2 = extract_key_cells_seuret(MemoryCD8_Exp_matrix1, fm, clus='CD8mem', md2, toxicMetals)
+out_surt3 = extract_key_cells_seuret(NaiveCD8_Exp_matrix1, fm, clus='CD8naive', md2, toxicMetals)
