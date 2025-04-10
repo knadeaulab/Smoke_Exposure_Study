@@ -12,6 +12,7 @@ library(Seurat)
 library(MAST)
 library(umap)
 library(Biobase)
+library(preprocessCore)
 
 dir.create("Data")
 
@@ -36,17 +37,14 @@ fm = c("CD27","CD28","CD154", "CD294","CD185", "CD62L", "CD183", "CD194", "CD196
         "CXCR5","CXCR3","CCR4","CCR6","CCR7","CCR5","PD.1", "CRTH2")
 functional_markers = unique(c(fm,toxicMetals))
 
-load("Data/CD8.Rdata")
-load("Data/CD8_T_HandGated_subsets.RData")
-
+load("Files/CD8.Rdata")
+load("Files/CD8_T_HandGated_subsets.Rdata")
 
 colrs = c( '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', 
            '#bcf60c', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', 
            '#808000', '#ffd8b1', '#000075', '#808080', '#ffffff', '#000000')
 
-###############################
 ######### Functions ###########
-###############################
 extract_key_cells <- function(data, keymarkers, clus, md2, toxicMetals){
   idx = grep(pattern = "sample", colnames(data), ignore.case = T)
   colnames(data)[idx] = "sample_id"
@@ -100,17 +98,17 @@ extract_key_cells <- function(data, keymarkers, clus, md2, toxicMetals){
         xlab(label = "" ) + ylab(label = "% cluster cells") +
         theme(strip.background = element_rect(fill = "white"),
               strip.text = element_text(size = 14),
-              legend.position = "none")  +  facet_wrap(~Marker) + labs(subtitle = paste(pval,"|",clus))
+              legend.position = "none")  +  facet_wrap(~Marker) 
       mplots[[paste(mark)]]= gg
     }
   }
   return(mplots)
 }
-extract_key_cells_seuret <- function(data, keymarkers, clus, md2, toxicMetals){
+extract_key_cells_seuret <- function(data, keymarkers=fm, clus, md2, toxicMetals){
   idx = grep(pattern = "sample", colnames(data), ignore.case = T)
   colnames(data)[idx] = "sample_id"
   hcless = dplyr::filter(data, cluster %in% clus)
-  keymarkers = intersect(colnames(hcless), functional_markers)
+  keymarkers = intersect(colnames(hcless), keymarkers)
   
   Mdata = as.data.frame(t(hcless[,keymarkers]))
   colnames(Mdata) = rownames(hcless)
@@ -155,7 +153,6 @@ MSI_analysis <- function(data, clus, functional_markers, md2, toxicMetals){
   ggdf = dplyr::filter(data, cluster == clus)
   mm = match(ggdf$sample_id, md2$SampleID)
   ggdf$Group = md2$Group[mm]
-  ggdf$Batch = md2$Batch[mm]
   ggdf$group2 = ifelse(ggdf$Group == "nonSE", 0 , 1)
   ggdf$Group = factor(ifelse(ggdf$Group == "nonSE","nonSE", "SE"), levels = c("nonSE","SE"))
   fm = intersect(functional_markers, colnames(ggdf))
@@ -173,18 +170,12 @@ MSI_analysis <- function(data, clus, functional_markers, md2, toxicMetals){
       tmpdf2$Batch = md2$Batch[mm]
       tmpdf2 = tmpdf2 %>% dplyr::group_by(Group,Batch,sample_id) %>% summarize(across(where(is.numeric), median, na.rm = TRUE))
      } else {
-      tmpdf = ggdf[,c(mark,"Group","group2","Batch","sample_id")]
+      tmpdf = ggdf[,c(mark,"Group","group2","sample_id")]
       colnames(tmpdf)[1] = "Marker"
-      tmpdf2 = tmpdf %>% dplyr::group_by(Group,group2,Batch,sample_id) %>% summarize(across(where(is.numeric), median, na.rm = TRUE))
+      tmpdf2 = tmpdf %>% dplyr::group_by(Group,group2,sample_id) %>% summarize(across(where(is.numeric), median, na.rm = TRUE))
     }
     tg = length(unique(as.character(tmpdf2$Group)))
     if ((sum(tmpdf2$Marker) > 0.1) & (tg == 2)) {
-      tmpdf2$Group2 = ifelse(tmpdf2$Group=="SE", 1, 0)
-      #tt = glm(Group2~Marker + Batch, data = tmpdf2, family = binomial)
-      #out = summary(tt)
-      #Pvalue = as.numeric(out$coefficients["Marker",4])
-      #out = data.frame(pval = Pvalue, cluster = clus, Marker = mark)
-      #tmpout = rbind(tmpout, out)
       gg = ggplot(tmpdf2, aes(x = Group, y = Marker, color = Group)) + 
         geom_boxplot(position = position_dodge(width = 0.85), outlier.shape = NA) +
         geom_point(aes(color = Group),position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.7), size = 2, alpha = 0.8) +
@@ -195,15 +186,9 @@ MSI_analysis <- function(data, clus, functional_markers, md2, toxicMetals){
               strip.text = element_text(size = 14), 
               legend.position = "none")  +
         labs(title = clus, subtitle = mark) 
-        #tt = lm(Marker~Group, data = tmpdf2)
-        #out = summary(tt)
-        #pvalue0 = as.data.frame(out$coefficients)[2,4]
-        #if(is.na(pvalue0)){pvalue0 = 1}
-        #if(is.na(Pvalue)){pvalue0 = 1}
         BTplot[[paste(clus, mark)]]= gg
     }
   }
-  tmpout$FDR = p.adjust(tmpout$pval, method = "fdr" )
   return(BTplot)
 }
 subSample <- function(sample_ids,ncount){ 
@@ -241,9 +226,7 @@ drawUMAP <- function(df, n_neighbors=15, min_dist=0.5, n_components=2, metric = 
   return(list(embedding))
 }
 
-####################################
-#### Total CD8+ T cell analysis ####
-####################################
+## Total CD8+ T cell analysis ####
 ## CD3 cell count per sample ##
 colnames(cd3) = c("Filename", "count")
 mm = match(cd3$Filename, md$FileName)
@@ -277,162 +260,15 @@ gg = ggplot(prop, aes(x = Group, y = Prop, color = Group)) +
         legend.position = "none")  +
   labs(subtitle = paste("CD8+ Tcells | P-value", Pvalue) )
 
-pdf("Total_CD8_Proportion.pdf", width = 1.8, height = 4)
+pdf("Supp.Fig.12a.pdf", width = 1.8, height = 4)
 print(gg)
 dev.off()
 
-########################
-## FlowSOM clustering ##
-########################
-lm = c("PD.1","CXCR3","CCR4","CXCR5","CCR6","CCR5","CRTH2", "HLA.DR", "CD62L","CD127","CD27", "CD28","CCR7","CD45RA")
-md2 = dplyr::filter(md, Ignore == "No" & PPID %in% finalSamples)
-## Enable this to run FlowSOM ##
-# idx =  which(PIDs %in% md2$SampleID)
-# data = ExpressionMatrix[idx,]
-# sampleIDs = as.character(PIDs[idx])
-# lineage_markers = intersect(lm, colnames(data))
-# message("creating a flowset..")
-# fcs.input <- new("flowFrame", exprs=as.matrix(data[,lineage_markers]))
-# message("Running FlowSOM..")
-# flowSOM.res <- FlowSOM(fcs.input, colsToUse = lineage_markers, scale = FALSE ,nClus=15) ## 15 clusters
-# message("generating Meta-Clusters..")
-# labels <- GetMetaclusters(flowSOM.res)
-# data = as.data.frame(data)
-data$cluster = labels
-data$sample_id = sampleIDs
-pdf7 = as.data.frame(data[,c(lm,"cluster")] %>% dplyr::group_by(cluster) %>% summarise_all(median))
-nam = data[,c(lm,"cluster")] %>% dplyr::group_by(cluster) %>% summarize(count = n(), proportion = (n() / nrow(data))*100)
-rownames(pdf7) = paste(rownames(pdf7), " (", format(nam$proportion, digits=2) , "%)", sep="")
-clusOrder = c(1,3:8, 10,11,9,2,12:15) ##manually elected order to show CCR7-CD45RA+ cells above naive cells 
-mm = match(clusOrder, pdf7$cluster)
-pdf7$cluster = factor(pdf7$cluster , levels = clusOrder)
-
-pdf("Total_CD8_FlowSOM_clusters_Heatmap.pdf", width = 8, height = 5)
-pheatmap(pdf7[mm,lm], cluster_rows = F, cluster_cols = F,
-         color = colorRampPalette(c("white","lightblue", "navy", "orange", "firebrick3"))(50))
-dev.off()
-
-## Enable this code to run UMAP again ##
-#idx = subSampleByBatch(data,1000, md2)
-#subsample.expr = data[idx,]
-#SampleID = idx
-#lineage_markers = intersect(lm, colnames(subsample.expr))
-#list.out = drawUMAP(df=subsample.expr[,lineage_markers], n_neighbors=15, min_dist=0.5, n_components=2, metric = "euclidean",t="Umap",lineage_markers,v="Cell types") 
-
-ggdf = as.data.frame(list.out[[1]]$layout)
-colnames(ggdf) = c("UMAP1","UMAP2")
-ggdf$cluster = cluster_labels
-g <- ggplot(ggdf,  aes(x = UMAP1, y = UMAP2, color = cluster)) +
-  geom_point(size = 0.05) + theme_bw() + 
-  theme(strip.background = element_rect(fill = "white"),
-        strip.text = element_text(size=16),
-        panel.grid = element_blank())+
-  scale_color_manual(values =colrs )
-
-pdf("Total_CD8_UMAP.pdf", width = 5.5, height = 5 )
-print(g)
-centroids <- ggdf %>% group_by(cluster) %>% summarise(UMAP1 = mean(UMAP1), UMAP2 = mean(UMAP2))
-g1 = g + geom_text(data = centroids, aes(x = UMAP1, y = UMAP2, label = cluster), color = "black", size = 5, fontface = "bold")
-print(g1)
-dev.off()
-
-############################################
-### Proportion of cells in each cluster ####
-############################################
-tcells = as.data.frame(table(data$sample_id))
-prop = as.data.frame(table(data$sample_id, data$cluster))
-colnames(prop) = c("PID", "ClusterNumber", "count")
-mm = match(prop$PID, tcells$Var1)
-prop$total = tcells$Freq[mm]
-prop$Prop = (prop$count/prop$total) * 100
-mm = match(prop$PID, md2$SampleID)
-prop$Group = md2$Group[mm]
-prop$Batch = md2$Batch[mm]
-out_prop = data.frame()
-bplots = list()
-for(clus in unique(prop$ClusterNumber)){
-  ggdf = dplyr::filter(prop,ClusterNumber == clus)
-  ggdf$group2 = ifelse(ggdf$Group == "nonSE", 0 , 1)
-  ggdf$Group = factor(ifelse(ggdf$Group == "nonSE","nonSE", "SE"), levels = c("nonSE","SE"))
-  tt = glm(Group~Prop + Batch, data = ggdf, family = binomial)
-  out = summary(tt)
-  Pvalue = as.numeric(out$coefficients["Prop",4])
-  out = data.frame(pval = Pvalue, cluster = clus)
-  out_prop = rbind(out, out_prop)
-  
-  gg = ggplot(ggdf, aes(x = Group, y = Prop, color = Group)) + 
-    geom_boxplot(position = position_dodge(width = 0.85), outlier.shape = NA) +
-    geom_point(aes(color = Group),position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.7), size = 2, alpha = 0.8) +
-    scale_fill_manual(values = c('#4363d8','#f58231',"black")) +
-    scale_color_manual(values = c('#4363d8','#f58231')) + theme_bw(base_size = 16) +
-    xlab(label = "" ) + ylab(label = "% Total live cells") +
-    theme(strip.background = element_rect(fill = "white"),
-          strip.text = element_text(size = 14), 
-          legend.position = "none")  +
-    labs(subtitle = clus) 
-  
-  bplots[[clus]]= gg
-}
-pdf("Total_CD8_Prop_per_cluster.pdf", width = 10, height = 11)
-wrap_plots(plotlist = bplots, ncol = 6, nrow = 3)
-dev.off()
-
-###########################################
-##  MSI per marker for each CD8 cluster ###
-###########################################
-bxplots = list()
-for(clus in unique(prop$ClusterNumber)){
-  out = MSI_analysis(data, clus, functional_markers = fm, md2, toxicMetals)
-  bxplots = append(bxplots,out[[2]])
-}
-pdf("CD8_cluster_MSI_BoxPlot.pdf", width =2, height = 4.2)
-for (p in bxplots){
-  print(p)
-}
-dev.off()
-
-############################################
-## key Markers + cells for each cluster ####
-############################################
-## Both Toxin metals & functional markers ##
-############ will be analyzed ##############
-############################################
-
-mainClusters = c(1,2,5,6,7,8,9,10,12,13,15) ### only these are clusters in which atleast one marker was found to be significant 
-ggdfg = data.frame()
-## In each cluster, identify marker (high) cells and compute their proportion SE vs nonSE  
-for (clus in mainClusters){ 
-  message(clus)
-  fm = intersect(functional_markers, colnames(data))
-  out = extract_key_cells(data, fm , clus, md2)
-  filename = paste("CD8_", clus, "_prop.pdf", sep="")
-  pdf(filename, width = 1.6, height = 3.5)
-  for (plt in out){
-    print(plt)
-  }
-  dev.off()
-}
-seurat_output = data.frame()
-for (clus in mainClusters){ ## only these are non-naive clusters in which atleast one marker was found to be significant 
-  message(clus)
-  fm = intersect(functional_markers, colnames(data))
-  out_fdr = extract_key_cells_seuret(data, fm, clus, md2)
-  out_fdr$Cluster = clus
-  out_fdr$Marker = rownames(out_fdr)
-  seurat_output = rbind(seurat_output, out_fdr)
-}
-
-###########################################
-#### Manually gated CD8+ T cell subsets ###
-######### CD8 memory vs Naive #############
-###########################################
-colnames(cd3) = c("Filename", "count")
-mm = match(cd3$Filename, md$FileName)
-cd3$SID = md$SampleID[mm]
-prop0 = as.data.frame(table(NaiveCD8_Exp_matrix0$SampleID))
+### memory vs Naive handgated CD8-T cells ###
+prop0 = as.data.frame(table(NaiveCD8_Exp_matrix1$SampleID))
 colnames(prop0) = c("SID","count")
 prop0$CellType = "Naive"
-prop1 = as.data.frame(table(MemoryCD8_Exp_matrix0$SampleID))
+prop1 = as.data.frame(table(MemoryCD8_Exp_matrix1$SampleID))
 colnames(prop1) = c("SID","count")
 prop1$CellType = "Memory"
 prop = rbind(prop0,prop1)
@@ -444,7 +280,9 @@ prop$Group = md$Group[mm]
 prop$Ignore = md$Ignore[mm]
 prop$PPID = md$PPID[mm]
 prop$Batch = md$Batch[mm]
-prop  = dplyr::filter(prop, Ignore == "No" & PPID %in%  finalSamples$V1)
+prop  = dplyr::filter(prop, Ignore == "No" & PPID %in%  finalSamples)
+
+## P-value calculation of individual cell type ##
 for (ct in unique(prop$CellType)){
   tmpdf = dplyr::filter(prop, CellType == ct)
   tmpdf$Group = factor(ifelse(tmpdf$Group == "nonSE","nonSE", "SE"), levels = c("nonSE","SE"))
@@ -453,10 +291,12 @@ for (ct in unique(prop$CellType)){
   Pvalue = as.numeric(out$coefficients["Prop",4])
   message(Pvalue)
 }
+
 prop$Group = factor(ifelse(prop$Group == "nonSE","nonSE", "SE"), levels = c("nonSE","SE"))
 mod = glm(Group~Prop * CellType, data = prop, family = binomial)
 out = summary(mod)
 Pvalue_interaction = as.numeric(out$coefficients[4,4])
+
 gg = ggplot(prop, aes(x = Group, y = Prop, color = Group)) + 
   geom_boxplot(position = position_dodge(width = 0.85), outlier.shape = NA) +
   geom_point(aes(color = Group),position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.7), size = 2, alpha = 0.8) +
@@ -469,35 +309,138 @@ gg = ggplot(prop, aes(x = Group, y = Prop, color = Group)) +
         legend.position = "none")  +
   labs(subtitle = paste("CD8+ Tcells | P-value", Pvalue_interaction) )
 
-pdf("Manually_gated_CD8_subsets_Proportion.pdf", width = 3.0, height = 4)
+pdf("Supp.Fig.12b.pdf", width = 3.0, height = 4)
 print(gg)
 dev.off()
 
-##########################################################
-##### Marker+ cells in manually gated sub-population #####
-##########################################################
-fm = intersect(functional_markers, colnames(MemoryCD8_Exp_matrix1))
-MemoryCD8_Exp_matrix1$cluster = "CD8mem"
-NaiveCD8_Exp_matrix1$cluster = "CD8naive"
+## FlowSOM clustering ##
+lm = c("PD.1","CXCR3","CCR4","CXCR5","CCR6","CCR5","CRTH2", "HLA.DR", "CD62L","CD127","CD27", "CD28","CCR7","CD45RA")
+md2 = dplyr::filter(md, Ignore == "No" & PPID %in% finalSamples)
 
-out2 = extract_key_cells(MemoryCD8_Exp_matrix1, fm , clus="CD8mem", md2, toxicMetals)
-out3 = extract_key_cells(NaiveCD8_Exp_matrix1, fm , clus="CD8naive", md2, toxicMetals)
+## FlowSOM output is already stored in variable 'data' ##
+## uncomment following lines to re-run FlowSOM ## Warning: Due to stochastic nature of FlowSOM results may show minor differences in each run) ##
+# idx =  which(PIDs %in% md2$SampleID)
+# data = ExpressionMatrix[idx,]
+# sampleIDs = as.character(PIDs[idx])
+# lineage_markers = intersect(lm, colnames(data))
+# message("creating a flowset..")
+# fcs.input <- new("flowFrame", exprs=as.matrix(data[,lineage_markers]))
+# message("Running FlowSOM..")
+# flowSOM.res <- FlowSOM(fcs.input, colsToUse = lineage_markers, scale = FALSE ,nClus=15) ## 15 clusters
+# message("generating Meta-Clusters..")
+# labels <- GetMetaclusters(flowSOM.res)
+# data = as.data.frame(data)
+# data$cluster = labels
+# data$sample_id = sampleIDs
+pdf7 = as.data.frame(data[,c(lm,"cluster")] %>% dplyr::group_by(cluster) %>% summarise_all(median))
+nam = data[,c(lm,"cluster")] %>% dplyr::group_by(cluster) %>% summarize(count = n(), proportion = (n() / nrow(data))*100)
+rownames(pdf7) = paste(rownames(pdf7), " (", format(nam$proportion, digits=2) , "%)", sep="")
+clusOrder = c(1,3:8, 10,11,9,2,12:15) ##manually elected order to show CCR7-CD45RA+ cells above naive cells 
+mm = match(clusOrder, pdf7$cluster)
+pdf7$cluster = factor(pdf7$cluster , levels = clusOrder)
 
-pdf("CD8_memory.pdf", width = 1.6, height = 3.5)
-for (plt in out2){print(plt)}
-dev.off()
-pdf("CD8_naive.pdf", width = 1.6, height = 3.5)
-for (plt in out3){print(plt)}
+pdf("Supp.Figure.12e.pdf", width = 8, height = 5)
+pheatmap(pdf7[mm,lm], cluster_rows = F, cluster_cols = F,
+         color = colorRampPalette(c("white","lightblue", "navy", "orange", "firebrick3"))(50))
 dev.off()
 
-outMSI2 = MSI_analysis(MemoryCD8_Exp_matrix1, clus='CD8mem', fm, md2, toxicMetals)
-outMSI3 = MSI_analysis(NaiveCD8_Exp_matrix1, clus='CD8naive', fm, md2, toxicMetals)
-pdf("CD8_memory_MSI.pdf", width = 1.6, height = 3.5)
-for (plt in outMSI2){print(plt)}
-dev.off()
-pdf("CD8_naive_MSI.pdf", width = 1.6, height = 3.5)
-for (plt in outMSI3){print(plt)}
+
+## UMAP: Enable this code to run UMAP again ##
+#idx = subSampleByBatch(data,1000, md2)
+#subsample.expr = data[idx,]
+#SampleID = idx
+#lineage_markers = intersect(lm, colnames(subsample.expr))
+#list.out = drawUMAP(df=subsample.expr[,lineage_markers], n_neighbors=15, min_dist=0.5, n_components=2, metric = "euclidean",t="Umap",lineage_markers,v="Cell types") 
+
+colrs = c( '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', 
+           '#bcf60c', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', 
+           '#808000', '#ffd8b1', '#000075', '#808080', '#ffffff', '#000000')
+
+ggdf = as.data.frame(list.out[[1]]$layout)
+colnames(ggdf) = c("UMAP1","UMAP2")
+ggdf$cluster = subsample.expr$cluster
+
+g <- ggplot(ggdf,  aes(x = UMAP1, y = UMAP2, color = cluster)) +
+  geom_point(size = 0.05) + theme_bw() + 
+  theme(strip.background = element_rect(fill = "white"),
+        strip.text = element_text(size=16),
+        panel.grid = element_blank())+
+  scale_color_manual(values =colrs )
+
+pdf("Supp.Fig.12d.pdf", width = 5.5, height = 5 )
+print(g)
+centroids <- ggdf %>% group_by(cluster) %>% summarise(UMAP1 = mean(UMAP1), UMAP2 = mean(UMAP2))
+g1 = g + geom_text(data = centroids, aes(x = UMAP1, y = UMAP2, label = cluster), color = "black", size = 5, fontface = "bold")
+print(g1)
 dev.off()
 
-out_surt2 = extract_key_cells_seuret(MemoryCD8_Exp_matrix1, fm, clus='CD8mem', md2, toxicMetals)
-out_surt3 = extract_key_cells_seuret(NaiveCD8_Exp_matrix1, fm, clus='CD8naive', md2, toxicMetals)
+##  MSI per marker in memory CD8 T cells ###
+fm = c("CXCR3","CD27","CD154", "CD294","CD185", "CD62L", "CD183","CD194", "CD196", "CD197",
+       "CD195","CD279","CXCR5","CCR4","CCR6","CCR7","CCR5","PD.1", "CRTH2")
+functional_markers = fm
+MemoryCD8_Exp_matrix0$cluster = "a"
+outMSI = MSI_analysis(MemoryCD8_Exp_matrix0, clus='a', fm, md2, toxicMetals)
+
+pdf("Supp.Figure.12c.pdf", width = 1.6, height = 3.5)
+plt = outMSI[[1]]
+print(plt)
+tmpdf2 = outMSI[[1]]$data
+tt = glm(Group2~Marker + Batch, data = tmpdf2, family = binomial)
+out = summary(tt)
+Pvalue = as.numeric(out$coefficients["Marker",4])
+print(paste("CXCR3 P-value:", Pvalue))
+dev.off()
+
+## cells proportion with hi-marker (e.g. CCR7-hi cells) ##
+## Following cods will produce box-plots; Only printing ##
+## which we presented in study ##
+clus_used = c(1,5,7,9,6)
+pdf("Supp.Figure.12f-j.pdf", width = 1.6, height = 3.5)
+for (clus in clus_used){
+  if(clus %in% c(1)){markers_ = c("CXCR3","PD.1","CD154")}
+  if(clus %in% c(5)){markers_ = c("CCR7")}
+  if(clus %in% c(6)){markers_ = c("CRTH2","CCR6")}
+  if(clus %in% c(7)){markers_ = c("CCR7")}
+  if(clus %in% c(9)){markers_ = c("CCR6")}
+  out = extract_key_cells(data, keymarkers = markers_ , clus = clus, md2, toxicMetals) ## retrieving cells with "hi" expression of a given marker
+  tmpdf = data.frame()
+  for(tmp in out){
+    gg = tmp + labs(subtitle = paste("Cluster :", clus))
+    tmp$data$Cluster = clus
+    tmpdf = rbind(tmpdf, tmp$data)
+    print(gg)
+    }
+}
+dev.off()
+
+##seurat_output: In each cluster, identify marker (high) cells and compute their proportion SE vs nonSE  
+for(clus in unique(data$cluster)){ ## only these are non-naive clusters in which atleast one marker was found to be significant 
+  output_1 = data.frame()
+  message(clus)
+  fm2 = intersect(fm, colnames(data))
+  out_fdr = extract_key_cells_seuret(data, fm2, clus, md2, toxicMetals )
+  out_fdr$Cluster = clus
+  out_fdr$Marker = rownames(out_fdr)
+  output_1 = rbind(output_1, out_fdr)
+}
+print(output_01)
+
+maincluster = c(5,6,7,8,9,10,2,12,13)
+pdf("Supp.Figure.12i-j.pdf")
+for(clus in maincluster){
+  out = MSI_analysis(data, clus, functional_markers , md2, toxicMetals)
+  print(out[[1]])
+}
+dev.off()
+
+### Toxic metal analysis ###
+load("Files/CD8_T_HandGated_subsets.Rdata")
+out1 = extract_key_cells(data, "110Cd" , "MemoryCD8_2", md2, toxicMetals)
+out2 = extract_key_cells(data, "110Cd" , "NaiveCD8_2", md2, toxicMetals)
+pdf("Figure4c.pdf", width = 1.6, height = 3.5)
+print(out1[[1]])
+print(out2[[1]])
+dev.off()
+
+
+

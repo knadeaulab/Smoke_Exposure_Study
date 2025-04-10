@@ -12,7 +12,7 @@ library(Seurat)
 library(MAST)
 library(umap)
 library(Biobase)
-
+library(preprocessCore)
 set.seed(123)
 dir.create("Data")
 
@@ -22,7 +22,7 @@ dir.create("Data")
 ############################################################################################
 
 md = read.csv("Files/FileInfoBcells.csv") ## Sample annotation 
-cd3 = read.csv("Files/HandGated/CD3neg_cell_count.csv") ## CD3- cell count per sample 
+cd3 = read.csv("Files/CD3neg_cell_count.csv") ## CD3- cell count per sample 
 finalSamples = c("1294","1804","2765","2766","5023","5024","5865","5866","FF-024","WF046","WF135","FF-013",
                  "WF034","FF-035","FF-022","WF008","WF055","WF045","WF128","WF110","WF081","FF-052","FF-023",
                  "WF015","WF057","FF-045","WF023","WF002","WF005","WF042","WF051","WF094","WF102","WF120",
@@ -40,9 +40,8 @@ functional_markers = unique(c(fm,toxicMetals))
 load("Data/Bcell.Rdata")
 load("Data/Bcells_HandGated_subsets.Rdata")
 
-###############################
-######### Functions ###########
-###############################
+
+### Functions ###
 extract_key_cells <- function(data, keymarkers, clus, md2, toxicMetals){
   idx = grep(pattern = "sample", colnames(data), ignore.case = T)
   colnames(data)[idx] = "sample_id"
@@ -96,17 +95,17 @@ extract_key_cells <- function(data, keymarkers, clus, md2, toxicMetals){
         xlab(label = "" ) + ylab(label = "% cluster cells") +
         theme(strip.background = element_rect(fill = "white"),
               strip.text = element_text(size = 14),
-              legend.position = "none")  +  facet_wrap(~Marker) + labs(subtitle = paste(pval,"|",clus))
+              legend.position = "none")  +  facet_wrap(~Marker) 
       mplots[[paste(mark)]]= gg
     }
   }
   return(mplots)
 }
-extract_key_cells_seuret <- function(data, keymarkers, clus, md2, toxicMetals){
+extract_key_cells_seuret <- function(data, keymarkers=fm, clus, md2, toxicMetals){
   idx = grep(pattern = "sample", colnames(data), ignore.case = T)
   colnames(data)[idx] = "sample_id"
   hcless = dplyr::filter(data, cluster %in% clus)
-  keymarkers = intersect(colnames(hcless), functional_markers)
+  keymarkers = intersect(colnames(hcless), keymarkers)
   
   Mdata = as.data.frame(t(hcless[,keymarkers]))
   colnames(Mdata) = rownames(hcless)
@@ -151,7 +150,6 @@ MSI_analysis <- function(data, clus, functional_markers, md2, toxicMetals){
   ggdf = dplyr::filter(data, cluster == clus)
   mm = match(ggdf$sample_id, md2$SampleID)
   ggdf$Group = md2$Group[mm]
-  ggdf$Batch = md2$Batch[mm]
   ggdf$group2 = ifelse(ggdf$Group == "nonSE", 0 , 1)
   ggdf$Group = factor(ifelse(ggdf$Group == "nonSE","nonSE", "SE"), levels = c("nonSE","SE"))
   fm = intersect(functional_markers, colnames(ggdf))
@@ -169,18 +167,12 @@ MSI_analysis <- function(data, clus, functional_markers, md2, toxicMetals){
       tmpdf2$Batch = md2$Batch[mm]
       tmpdf2 = tmpdf2 %>% dplyr::group_by(Group,Batch,sample_id) %>% summarize(across(where(is.numeric), median, na.rm = TRUE))
     } else {
-      tmpdf = ggdf[,c(mark,"Group","group2","Batch","sample_id")]
+      tmpdf = ggdf[,c(mark,"Group","group2","sample_id")]
       colnames(tmpdf)[1] = "Marker"
-      tmpdf2 = tmpdf %>% dplyr::group_by(Group,group2,Batch,sample_id) %>% summarize(across(where(is.numeric), median, na.rm = TRUE))
+      tmpdf2 = tmpdf %>% dplyr::group_by(Group,group2,sample_id) %>% summarize(across(where(is.numeric), median, na.rm = TRUE))
     }
     tg = length(unique(as.character(tmpdf2$Group)))
     if ((sum(tmpdf2$Marker) > 0.1) & (tg == 2)) {
-      tmpdf2$Group2 = ifelse(tmpdf2$Group=="SE", 1, 0)
-      #tt = glm(Group2~Marker + Batch, data = tmpdf2, family = binomial)
-      #out = summary(tt)
-      #Pvalue = as.numeric(out$coefficients["Marker",4])
-      #out = data.frame(pval = Pvalue, cluster = clus, Marker = mark)
-      #tmpout = rbind(tmpout, out)
       gg = ggplot(tmpdf2, aes(x = Group, y = Marker, color = Group)) + 
         geom_boxplot(position = position_dodge(width = 0.85), outlier.shape = NA) +
         geom_point(aes(color = Group),position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.7), size = 2, alpha = 0.8) +
@@ -191,15 +183,9 @@ MSI_analysis <- function(data, clus, functional_markers, md2, toxicMetals){
               strip.text = element_text(size = 14), 
               legend.position = "none")  +
         labs(title = clus, subtitle = mark) 
-      #tt = lm(Marker~Group, data = tmpdf2)
-      #out = summary(tt)
-      #pvalue0 = as.data.frame(out$coefficients)[2,4]
-      #if(is.na(pvalue0)){pvalue0 = 1}
-      #if(is.na(Pvalue)){pvalue0 = 1}
       BTplot[[paste(clus, mark)]]= gg
     }
   }
-  tmpout$FDR = p.adjust(tmpout$pval, method = "fdr" )
   return(BTplot)
 }
 subSample <- function(sample_ids,ncount){ 
@@ -250,7 +236,6 @@ for(pattern in cd3$RegEx){
 mm = match(cd3$RegEx,tmpdf$pattern)
 cd3 = cbind(cd3, tmpdf[mm,])
 cd3$SID = cd3$SampleID
-
 prop = as.data.frame(table(PIDs))
 colnames(prop) = c("SID","count")
 mm = match(prop$SID, cd3$SID)
@@ -261,7 +246,7 @@ prop$Group = md$Group[mm]
 prop$Ignore = md$Ignore[mm]
 prop$PPID = md$PPID[mm]
 prop$Batch = md$Batch[mm]
-prop  = dplyr::filter(prop, Ignore == "No" & PPID %in%  finalSamples$V1)
+prop  = dplyr::filter(prop, Ignore == "No" & PPID %in%  finalSamples)
 
 prop$Group = factor(ifelse(prop$Group == "nonSE","nonSE", "SE"), levels = c("nonSE","SE"))
 mod = glm(Group~Prop + Batch, data = prop, family = binomial)
@@ -277,22 +262,20 @@ gg = ggplot(prop, aes(x = Group, y = Prop, color = Group)) +
   theme(strip.background = element_rect(fill = "white"),
         strip.text = element_text(size = 14), 
         legend.position = "none")  +
-  labs(subtitle = paste("B cells | P-value", Pvalue) )
+  labs(subtitle = paste("B cells") )
 
-pdf("Total_Bcells_prop.pdf", width = 1.8, height = 4)
+pdf("Supp.Fig.14a.pdf", width = 1.8, height = 4)
 print(gg)
 dev.off()
 
-
-########################
 ## FlowSOM clustering ##
-########################
 md2 = dplyr::filter(md, Ignore == "No" & PPID %in% finalSamples)
 idx =  which(PIDs %in% md2$SampleID)
-data = ExpressionMatrix[idx,]
-sampleIDs = as.character(PIDs[idx])
 lm = c("CCR7", "CCR6", "CXCR5","HLA.DR","CD27", "CD19", "CD62L")
 lineage_markers = intersect(lm, colnames(data))
+## Enable following lines to re-run flowSOM clustering ##
+#data = ExpressionMatrix[idx,]
+#sampleIDs = as.character(PIDs[idx])
 # message("creating a flowset..")
 # fcs.input <- new("flowFrame", exprs=as.matrix(data[,lineage_markers]))
 # message("Running FlowSOM..")
@@ -300,132 +283,31 @@ lineage_markers = intersect(lm, colnames(data))
 # message("generating Meta-Clusters..")
 # labels <- GetMetaclusters(flowSOM.res)
 # data = as.data.frame(data)
-data$cluster = labels
-data$sample_id = sampleIDs
+# data$cluster = labels
+# data$sample_id = sampleIDs
 ### Heatmap ###
 pdf7 = as.data.frame(data[,c(lm,"cluster")] %>% dplyr::group_by(cluster) %>% summarise_all(median))
 nam = data[,c(lm,"cluster")] %>% dplyr::group_by(cluster) %>% summarize(count = n(), proportion = (n() / nrow(data))*100)
 rownames(pdf7) = paste(rownames(pdf7), " (", format(nam$proportion, digits=2) , "%)", sep="")
-pdf("Total_Bcells_FlowSOM_clusters_Heatmap", width = 8, height = 5)
+
+pdf("Supp.Figure.S14c.pdf", width = 8, height = 5)
 pheatmap(pdf7[,lm], cluster_rows = F, cluster_cols = F,
          color = colorRampPalette(c("white","lightblue", "navy", "orange", "firebrick3"))(50))
 dev.off()
 
-## Enable this code to run UMAP again ##
-# idx = subSampleByBatch(data, 1000, md2)
-# subsample.expr = data[idx,]
-# SampleID = data$sample_id[idx]
-# cluster_labels = data$cluster[idx]
-# lineage_markers = intersect(lm, colnames(subsample.expr))
-# list.out = drawUMAP(df=subsample.expr[,lineage_markers], n_neighbors=15, min_dist=0.5, n_components=2, metric = "euclidean",t="Umap",lineage_markers,v="Cell types") 
-ggdf = as.data.frame(list.out[[1]]$layout)
-colnames(ggdf) = c("UMAP1","UMAP2")
-ggdf$cluster = cluster_labels
 
-g <- ggplot(ggdf,  aes(x = UMAP1, y = UMAP2, color = cluster)) +
-  geom_point(size = 0.05) + theme_bw() + 
-  theme(strip.background = element_rect(fill = "white"),
-        strip.text = element_text(size=16),
-        panel.grid = element_blank())+
-  scale_color_manual(values =colrs )
+## key Markers + cells for each cluster ###
+out = extract_key_cells(data, keymarkers = c("PD.1","CXCR5") , clus = 6, md2, toxicMetals)
+outMSI = MSI_analysis(data, clus=6, functional_markers = c("CCR5"), md2, toxicMetals)
 
-pdf("Total_Bcells_UMAP.pdf", width = 5.5, height = 5 )
-print(g)
-centroids <- ggdf %>% group_by(cluster) %>% summarise(UMAP1 = mean(UMAP1), UMAP2 = mean(UMAP2))
-g1 = g + geom_text(data = centroids, aes(x = UMAP1, y = UMAP2, label = cluster), color = "black", size = 5, fontface = "bold")
-print(g1)
+pdf("Supp.Figure.S14d.pdf", width =2, height = 4.2)
+print(out[[1]])
+print(out[[2]])
+print(outMSI[[1]])
 dev.off()
 
-############################################
-### Proportion of cells in each cluster ####
-############################################
-tcells = as.data.frame(table(data$sample_id))
-prop = as.data.frame(table(data$sample_id, data$cluster))
-colnames(prop) = c("PID", "ClusterNumber", "count")
-mm = match(prop$PID, tcells$Var1)
-prop$total = tcells$Freq[mm]
-prop$Prop = (prop$count/prop$total) * 100
-mm = match(prop$PID, md2$SampleID)
-prop$Group = md2$Group[mm]
-prop$Batch = md2$Batch[mm]
-out_prop = data.frame()
-bplots = list()
-for(clus in unique(prop$ClusterNumber)){
-  ggdf = dplyr::filter(prop,ClusterNumber == clus)
-  ggdf$group2 = ifelse(ggdf$Group == "nonSE", 0 , 1)
-  ggdf$Group = factor(ifelse(ggdf$Group == "nonSE","nonSE", "SE"), levels = c("nonSE","SE"))
-  tt = glm(Group~Prop + Batch, data = ggdf, family = binomial)
-  out = summary(tt)
-  Pvalue = as.numeric(out$coefficients["Prop",4])
-  out = data.frame(pval = Pvalue, cluster = clus)
-  out_prop = rbind(out, out_prop)
-  
-  gg = ggplot(ggdf, aes(x = Group, y = Prop, color = Group)) + 
-    geom_boxplot(position = position_dodge(width = 0.85), outlier.shape = NA) +
-    geom_point(aes(color = Group),position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.7), size = 2, alpha = 0.8) +
-    scale_fill_manual(values = c('#4363d8','#f58231',"black")) +
-    scale_color_manual(values = c('#4363d8','#f58231')) + theme_bw(base_size = 16) +
-    xlab(label = "" ) + ylab(label = "% Total live cells") +
-    theme(strip.background = element_rect(fill = "white"),
-          strip.text = element_text(size = 14), 
-          legend.position = "none")  +
-    labs(subtitle = clus) 
-  
-  bplots[[clus]]= gg
-}
-pdf("Total_Bcells_Prop_per_cluster.pdf", width = 10, height = 11)
-wrap_plots(plotlist = bplots, ncol = 6, nrow = 3)
-dev.off()
 
-###########################################
-##  MSI per marker for each CD11c+ cluster ###
-###########################################
-bxplots = list()
-for(clus in unique(prop$ClusterNumber)){
-  out = MSI_analysis(data, clus, functional_markers = fm, md2, toxicMetals)
-  bxplots = append(bxplots,out[[2]])
-}
-pdf("Total_Bcells_cluster_MSI_BoxPlot.pdf", width =2, height = 4.2)
-for (p in bxplots){
-  print(p)
-}
-dev.off()
-
-############################################
-## key Markers + cells for each cluster ####
-############################################
-## Both Toxin metals & functional markers ##
-############ will be analyzed ##############
-############################################
-mainClusters = c(1:8) ### only these are clusters in which atleast one marker was found to be significant 
-ggdfg = data.frame()
-## In each cluster, identify marker (high) cells and compute their proportion SE vs nonSE  
-for (clus in mainClusters){ 
-  message(clus)
-  fm = intersect(functional_markers, colnames(data))
-  out = extract_key_cells(data, fm , clus, md2)
-  filename = paste("Total_Bcells_", clus, "_prop.pdf", sep="")
-  pdf(filename, width = 1.6, height = 3.5)
-  for (plt in out){
-    print(plt)
-  }
-  dev.off()
-}
-seurat_output = data.frame()
-for (clus in mainClusters){ ## only these are non-naive clusters in which atleast one marker was found to be significant 
-  message(clus)
-  fm = intersect(functional_markers, colnames(data))
-  out_fdr = extract_key_cells_seuret(data, fm, clus, md2)
-  out_fdr$Cluster = clus
-  out_fdr$Marker = rownames(out_fdr)
-  seurat_output = rbind(seurat_output, out_fdr)
-}
-
-########################################
-#### Manually gated B cell subsets #####
-######### B cells memory vs Naive ######
-########################################
-## CD3 cell count per sample ##
+### B cells memory vs Naive ##
 prop0 = as.data.frame(table(NaiveB_Exp_matrix0$SampleID))
 colnames(prop0) = c("SID","count")
 prop0$CellType = "Naive"
@@ -442,7 +324,7 @@ prop$Group = md$Group[mm]
 prop$Ignore = md$Ignore[mm]
 prop$PPID = md$PPID[mm]
 prop$Batch = md$Batch[mm]
-prop  = dplyr::filter(prop, Ignore == "No" & PPID %in%  finalSamples$V1)
+prop  = dplyr::filter(prop, Ignore == "No" & PPID %in%  finalSamples)
 
 
 for (ct in unique(prop$CellType)){
@@ -469,38 +351,10 @@ gg = ggplot(prop, aes(x = Group, y = Prop, color = Group)) +
   theme(strip.background = element_rect(fill = "white"),
         strip.text = element_text(size = 14), 
         legend.position = "none")  +
-  labs(subtitle = paste("B cells | P-value", Pvalue_interaction) )
+  labs(subtitle = paste("B cells ") )
 
-pdf("Bcells_Boxplot_prop_Memory_vs_Naive.pdf", width = 3.0, height = 4)
+pdf("Supp.Figure.S14b.pdf", width = 3.0, height = 4)
 print(gg)
 dev.off()
 
-#################################################
-##### Marker+ cells in gated sub-population #####
-#################################################
-fm = intersect(functional_markers, colnames(NKcd16_Exp_matrix0))
 
-MemoryB_Exp_matrix0$cluster = "MemoryB" ##
-out0 = extract_key_cells(MemoryB_Exp_matrix0, fm , clus='MemoryB', md2, toxicMetals)
-out_surt0 = extract_key_cells_seuret(MemoryB_Exp_matrix0, fm, clus='MemoryB', md2, toxicMetals)
-outMSI0 = MSI_analysis(MemoryB_Exp_matrix0, clus='MemoryB', fm, md2)
-
-NaiveB_Exp_matrix0$cluster = "NaiveB"
-out1 = extract_key_cells(NaiveB_Exp_matrix0, fm , clus="NaiveB", md2,toxicMetals)
-out_surt1 = extract_key_cells_seuret(NaiveB_Exp_matrix0, fm, clus='NaiveB', md2,toxicMetals)
-outMSI1 = MSI_analysis(NaiveB_Exp_matrix0, clus='NaiveB', fm, md2,toxicMetals)
-
-pdf("MemoryBcells.pdf", width = 1.6, height = 3.5)
-for (plt in out0){print(plt)}
-dev.off()
-
-pdf("NaiveBcells.pdf", width = 1.6, height = 3.5)
-for (plt in out1){print(plt)}
-dev.off()
-
-pdf("MemoryBcells_MSI.pdf", width = 1.6, height = 3.5)
-for (plt in outMSI0){print(plt)}
-dev.off()
-pdf("NaiveBcells_MSI.pdf", width = 1.6, height = 3.5)
-for (plt in outMSI1){print(plt)}
-dev.off()
