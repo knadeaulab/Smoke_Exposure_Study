@@ -248,26 +248,8 @@ dev.off()
 toxicMetals= c( "196Hg", "198Hg", "202Hg","182W","184W", "79Br","81Br","204Pb","209Bi","206Pb","208Pb",
                 "186W","180Ta", "181Ta", "121Sb", "123Sb","114Cd", "112Cd","110Cd","106Cd", "108Cd")
 
-# Preprocessing. Warning: CPU Intensive ##
-data$cluster = "Live"
-mm = match(data$sample_id, md$SampleID)
-Group = md$Group[mm]
-
-
-SE = data[Group == "SE", ]
-nonSE = data[Group == "nonSE", ]
-clusters = c(SE$cluster, nonSE$cluster)
-SID = c(SE$sample_id, nonSE$sample_id)
-
-
-mm = match(SID, md$SampleID)
-data$Batch  = md$Batch[mm]
-
-
-targetCls = setdiff(colnames(data),c("SampleID","cluster","Batch","sample_id"))
-
 ### Density Plot ###
-non_zeros_grouped <- data[,c(toxicMetals, "sample_id")] %>% group_by(sample_id) %>% summarise(across(everything(), ~ sum(. != 0), .names = "{col}"))
+non_zeros_grouped <- data2[,c(toxicMetals, "sample_id")] %>% group_by(sample_id) %>% summarise(across(everything(), ~ sum(. != 0), .names = "{col}"))
 ggdf = melt(non_zeros_grouped)
 colnames(ggdf)[2] = "Metal"
 ggdf$logCell_count = log(ggdf$value)
