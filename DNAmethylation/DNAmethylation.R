@@ -1,4 +1,4 @@
-setwd("/Users/abk347/Library/CloudStorage/OneDrive-HarvardUniversity/FF_integrative/Methylation/Version-3")
+setwd("/Users/abk347/Library/CloudStorage/OneDrive-HarvardUniversity/FF_integrative/Manuscript/Final_Submission/SourceData/R_codes/Smoke_Exposure_Study-main/DNAmethylation")
 library(EnhancedVolcano)
 library(limma)
 library(circlize)
@@ -39,7 +39,7 @@ out = eigencorplot(p, components = getComponents(p, seq_len(5)),
                    metavars = c('age', 'Race', 'Group', 'Batch_number','BMI'), ##
                    main  = "PCA analysis", scale = F, corMultipleTestCorrection = "BH", 
                    signifCutpoints = c(0, 0.00001, 0.001, 0.005, 1))
-pdf("SuppFigs3.pdf", width = 9, height = 6)
+pdf("SuppFig2.pdf", width = 9, height = 6)
 print(out)
 dev.off()
 
@@ -61,11 +61,9 @@ vp = EnhancedVolcano::EnhancedVolcano(toptable = res, x = 'logFC', y = 'adj.P.Va
                                       pointSize = 4)
 
 
-pdf("Fig1A.pdf", width = 5, height = 6)
+pdf("Fig2A.pdf", width = 5, height = 6)
 print(vp)
 dev.off()
-
-
 
 #### Section-3: Manhattan plot ####
 mm = match(rownames(res), locinfo$probes)
@@ -84,26 +82,13 @@ manhat = ggplot(res, aes(x = chr, y = -log10(adj.P.Val), color = as.factor(chr))
   theme_bw(base_size = 16) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.35))
 
-pdf("SuppFig2B.pdf", width = 11, height = 4)
+pdf("SuppFig1B.pdf", width = 11, height = 4)
 print(manhat)
 dev.off()
 
 
-#### Section-4: MDS plot ####
-# res_sig = dplyr::filter(res, abs(logFC) > 0.5 & adj.P.Val < 0.05 )
-# ##mds  = t(FF.M[rownames(res_sig),]) %>% dist() %>% cmdscale()
-# mds  = t(Mdata[rownames(res_sig),]) %>% dist() %>% cmdscale()
-# colnames(mds) <- c("Dim.1", "Dim.2")
-# mds = as.data.frame(mds)
-# mm = match(rownames(mds), metadata$ID)
-# mds$Group = metadata$Group[mm]
-# mds$female = metadata$female[mm]
-# 
-# mdsplot = ggplot(mds, aes(x = Dim.1, y = Dim.2, color = as.factor(Group))) +
-#   geom_point(size = 2.2) +
-#   scale_color_manual(values = c('#4363d8','#f58231')) +
-#   theme_classic(base_size = 16)
 
+#### Section-4: MDS plot ####
 res_sig = dplyr::filter(res, abs(logFC) > 0.5 & adj.P.Val < 0.2 )
 Mdata_t <- t(Mdata[rownames(res_sig),]) 
 Mdata_df <- as.data.frame(Mdata_t)
@@ -120,16 +105,9 @@ PLSLDAplot = ggplot(lda_scores, aes(x = Dim.1, y = Dim.2, color = as.factor(Grou
   scale_color_manual(values = c('#4363d8','#f58231')) +
   theme_classic(base_size = 16)
 
-#a = dplyr::filter(lda_scores, Group == 0 )
-#b = dplyr::filter(lda_scores, Group != 0 )
-#avg.sil.control = mean(sil.score(a[,c(1,2)]), na.rm = T) ## average silhouette width of control
-#avg.sil.FF = mean(sil.score(b[,c(1,2)]), na.rm = T)  ## average silhouette width of FF
-#wilcox.test(x = sil.score(a[,c(1,2)]), y = sil.score(b[,c(1,2)]))
-
 pdf("Fig2B.pdf", width = 5.5, height = 3)
 print(PLSLDAplot)
 dev.off()
-
 
 
 ### Section-5: GREAT tool for CpG site-> gene-ID association analysis ####
@@ -182,7 +160,7 @@ write.table(a, file = "significantSite.bed", sep="\t", quote = F, row.names = F)
 write.table(b, file = "background.bed", sep="\t", quote = F, row.names = F)
 ## the above two files were used as input for http://great.stanford.edu/public/html/index.php
 ## from the result page of GREAT, I extracted the region-geneID association excel file- GREAT_output_association_table.xlsx
-GL = read.table("DataF2C.txt", sep="\t")
+GL = read.table("IntermediateFiles/DataF2C.txt", sep="\t")
 # Here is the output of GREAT, lets see names of the genes
 gene_ids <- AnnotationDbi::select(org.Hs.eg.db, 
                                   keys = GL$V1, 
@@ -201,7 +179,7 @@ colnames(a) = NULL
 write.table(a, file = "significantSite_2.bed", sep="\t", quote = F, row.names = F)
 ## the above file was also used as input for http://great.stanford.edu/public/html/index.php
 ## from the result page of GREAT, I extracted the region-geneID association excel file- GREAT_output_association_table.xlsx
-GL1 = read.table("DataF2D.txt", sep="\t")
+GL1 = read.table("IntermediateFiles/DataF2D.txt", sep="\t")
 # Here is the output of GREAT, lets see names of the genes
 gene_ids <- AnnotationDbi::select(org.Hs.eg.db, 
                                   keys = GL1$V1, 
@@ -214,9 +192,10 @@ write.table(file="CpGassociatedGenes4Metascape.txt", GL$V1, quote = F, row.names
 write.table(file="CpGassociatedGenes4Metascape_withQ_less_than_0.05.txt", GL1$V1, quote = F, row.names = F)
 
 ## Upload the gene list (abs(log FC) > 0.5 & q < 0.2) to Metascape pathway analysis software and download the Summary of enrichment analysis 
-ggdf = read.table("Metascape_1.tsv", sep="\t", header = T)
+ggdf = read.table("IntermediateFiles/Metascape_1.tsv", sep="\t", header = T)
 ggdf$logQ = -1 * (ggdf$Log10.P.)
-pdf("Fig1C.pdf", height = 4, width = 8)
+
+pdf("Fig2C.pdf", height = 4, width = 8)
 ggplot(ggdf, aes(x = logQ, y = reorder(Description, logQ, decreasing = FALSE) , fill = logQ)) + 
   geom_bar(stat = "identity", width = 0.3) +
   geom_point(alpha=0.99, size = 3.0) + 
@@ -225,13 +204,14 @@ ggplot(ggdf, aes(x = logQ, y = reorder(Description, logQ, decreasing = FALSE) , 
 dev.off()
 
 ## Upload the gene list (q < 0.005) to Metascape pathway analysis software and download the Summary of enrichment analysis in DisGeNET as TSV file 
-ggdf = read.table("Metascape_2.tsv", sep="\t", header = T)
+ggdf = read.table("IntermediateFiles/Metascape_2.tsv", sep="\t", header = T)
 ggdf$logQ = -1 * (ggdf$Log10.P.)
 insteringPathaways = c("Allergic Reaction","Adult onset asthma","Squamous cell carcinoma of lung","Juvenile arthritis",
                        "Graves Disease","Primary biliary cirrhosis","Allergic rhinitis (disorder)",
                        "Hypothyroidism","Respiratory Tract Diseases","Autoimmune thyroid disease (AITD)","Cholangitis, Sclerosing")
 ggdf = ggdf[ggdf$Description %in% insteringPathaways, ]
-pdf("Fig1D.pdf", height = 2.5, width = 5.8)
+
+pdf("Fig2D.pdf", height = 2.5, width = 5.8)
 ggplot(ggdf, aes(x = logQ, y = reorder(Description, logQ, decreasing = FALSE) , fill = logQ)) + 
   geom_bar(stat = "identity", width = 0.3) +
   geom_point(alpha=0.99, size = 3.0) + 
@@ -240,26 +220,8 @@ ggplot(ggdf, aes(x = logQ, y = reorder(Description, logQ, decreasing = FALSE) , 
 dev.off()
 
 
-ggdf = read.table("enrichment.HPO.Q_0.005.tsv", sep="\t", header = T) ## uploaded geneList (q< 0.001) to STRING Database
-colnames(ggdf) = c("ID","Pname","count", "TotalCount", "strength","signal", "FDRp", "proteins", "genes")
-insteringPathaways = c("Bronchial disease","Asthma","Lower respiratory tract disease","Eczema",
-                       "Respiratory system disease","Adult onset asthma","Abnormality of skin physiology",
-                       "Inflammatory abnormality of the skin","Atopic asthma","Cardiovascular disease biomarker measurement")
-ggdf = ggdf[ggdf$Pname %in% insteringPathaways, ]
-ggdf$logp = -log10(ggdf$FDRp )
-ggdf$Pname = factor(ggdf$Pname, levels = ggdf$Pname)
-
-pdf("Fig2D.pdf", height = 2.2, width = 6.2)
-ggplot(ggdf, aes(x = logp, y = reorder(Pname, logp, decreasing = FALSE), fill = logp)) + 
-  geom_bar(stat = "identity", width = 0.3) +
-  geom_point(alpha=0.99, size = 3.0) + 
-  theme_classic(base_size = 12)+ 
-  scale_fill_continuous(type = "viridis", trans = 'reverse')
-dev.off()
-
-
-
-#### Section-7: circos plot ####
+#### circos plot ####
+Mdata = as.matrix(Mdata)
 FFid = rownames(metadata)[metadata$Group==1]
 ctrlid = rownames(metadata)[metadata$Group!=1]
 a = rowMedians(Mdata[,FFid])
@@ -279,7 +241,7 @@ colrs=randomcoloR::randomColor(count = length(target), luminosity="dark" )
 colrs = c('#e6194b','#3cb44b','#f032e6','#4363d8','#f58231','#911eb4')
 col_fun = colorRamp2(c(-1, 0, 1), c("green", "black", "red"))
 
-pdf("SuppFig2A.pdf")
+pdf("SuppFig1A.pdf")
 circos.clear()
 circos.initializeWithIdeogram(chromosome.index = paste0("chr", 1:22))
 #circos.genomicHeatmap(a1, col = col_fun, side = "outside",connection_height = NULL, heatmap_height = 0.07) ## FF 
@@ -302,7 +264,8 @@ draw(lgd_list, x = circle_size, just = "left")
 circos.clear()
 dev.off()
 
-#### Section-8: PFAS analysis ####
+
+#### PFAS analysis ####
 metadata00 = metadata[!is.na(metadata$TotalPFOS),]
 X = Mdata[,metadata00$ID]
 colnames(X) = metadata00$PPID
@@ -387,6 +350,7 @@ chordDiagram(edgelist, transparency = 0, grid.col = colr,
                track.margin = c(0.00, 0.00)))
 dev.off()
 
+
 ## bed file for GREAT analysis ##
 ## for those cpG sites that are significantly 
 ## associated pfoa pfos 
@@ -402,13 +366,13 @@ write.table(bed2, file = "significantSite_PFOS.bed", sep="\t", quote = F, row.na
 ## along with previously created background.bed file to upload in great webserver ###
 ## also get thier distance from TSS and gene-ID association ##
 ## upload the gene list from gene-ID association file to metascape webserver to get affected biological processes/pathways 
-ggdf = read.table("Metascape_PFOS.tsv", sep="\t", header = T)
+ggdf = read.table("IntermediateFiles/Metascape_PFOS.tsv", sep="\t", header = T)
 ggdf$logQ = -1 * (ggdf$Log10.P.)
-insteringPathaways = c("Allergic Reaction","Adult onset asthma","Squamous cell carcinoma of lung","Juvenile arthritis",
-                       "Graves Disease","Primary biliary cirrhosis","Allergic rhinitis (disorder)",
-                       "Hypothyroidism","Respiratory Tract Diseases","Ovarian Carcinoma","Cholangitis, Sclerosing")
+insteringPathaways = c("Allergic Reaction","Juvenile arthritis", "Cholangitis, Sclerosing",
+                       "Allergic rhinitis (disorder)","Hypothyroidism","Ovarian Carcinoma",)
 ggdf = ggdf[ggdf$Description %in% insteringPathaways, ]
-pdf("SuppFig7D.pdf", height = 2.0, width = 4.8)
+
+pdf("SuppFig6D.pdf", height = 2.0, width = 4.8)
 ggplot(ggdf, aes(x = logQ, y = reorder(Description, logQ, decreasing = FALSE) , fill = logQ)) + 
   geom_bar(stat = "identity", width = 0.3) +
   geom_point(alpha=0.99, size = 3.0) + 
@@ -416,15 +380,14 @@ ggplot(ggdf, aes(x = logQ, y = reorder(Description, logQ, decreasing = FALSE) , 
   scale_fill_continuous(type = "viridis", trans = 'reverse')
 dev.off()
 
-
-GL00 = read.table("F7C.txt", sep="\t")
+GL00 = read.table("IntermediateFiles/F7C.txt", sep="\t")
 # Here is the PFOS output of GREAT, lets see names of the genes
 gene_ids <- AnnotationDbi::select(org.Hs.eg.db,
                                   keys = GL00$V1,
                                   columns = c("GENENAME"),
                                   keytype = "SYMBOL")
 write.table(gene_ids, file = "DataFile-S05.tsv", sep="\t", quote = F, row.names = F)
-GL01 = read.table("F8C.txt", sep="\t")
+GL01 = read.table("IntermediateFiles/F8C.txt", sep="\t")
 # Here is the PFOA output of GREAT, lets see names of the genes
 gene_ids <- AnnotationDbi::select(org.Hs.eg.db,
                                   keys = GL01$V1,
@@ -447,6 +410,11 @@ ggdf = ggdf[ord,]
 #pfas2$X == rownames(methlation) ## if all TRUE we are good to go 
 tmpsource = data.frame()
 plots = list()
+
+main_Cpgs = c("cg07709773", "cg12533148", "cg14190488")
+
+## following two for loops generate data for Figure 2E ##
+fig2e = data.frame()
 for (i in 1:length(ggdf$MethSite)){
   message(i)
   #si = "cg04432046_BC11"
@@ -457,7 +425,10 @@ for (i in 1:length(ggdf$MethSite)){
   pval = mod$p.value
   mydf$CpGSite = si
   tmpsource = rbind(tmpsource, mydf)
-  
+  if(sum(grepl(sub("_.*","",si), main_Cpgs)) > 0){
+    idx= grepl(sub("_.*","",si), main_Cpgs)
+    fig2e = rbind(fig2e, mydf)
+  }
   g = ggplot(mydf, aes(x = X, y = Y, fill = G)) + 
     geom_point(size = 2.0, aes(color= G)) + 
     geom_smooth(method = "lm", aes(fill=G), color = "#4D4D4D") + 
@@ -467,7 +438,7 @@ for (i in 1:length(ggdf$MethSite)){
     theme(line= element_blank()) + theme_bw(base_size = 11)
   plots[[i]] = g
 }
-tmpsource$PFAS = "PFOA"
+fig2e$PFAS = "PFOA"
 
 pdf("Fig2E_1.pdf", width = 2.8, height = 2.0) ## scatterplot DNA methylation total PFOA
 for(pl in plots){
@@ -481,11 +452,8 @@ ggdf$MethSite = rownames(ggdf)
 ggdf$cor = abs(ggdf$PFOS_epigen)
 ord = order(ggdf$cor, decreasing = T)
 ggdf = ggdf[ord,]
-
-##methlation = as.data.frame(t(BX2[ggdf$MethSite[1], ]))
-##PFAS$X == rownames(methlation) ## if all TRUE we are good to go 
-
 plots = list()
+main_Cpgs = c("cg00191575", "cg20793599", "cg03162381")
 
 for (i in 1:length(ggdf$MethSite)){
   message(i)
@@ -497,8 +465,11 @@ for (i in 1:length(ggdf$MethSite)){
   pval = mod$p.value
   mydf$CpGSite = si
   mydf$PFAS = "PFOS"
-  tmpsource = rbind(tmpsource, mydf)
-  
+  #tmpsource = rbind(tmpsource, mydf)
+  if(sum(grepl(sub("_.*","",si), main_Cpgs)) > 0){
+    idx= grepl(sub("_.*","",si), main_Cpgs)
+    fig2e = rbind(fig2e, mydf[,c("X","Y","G","CpGSite","PFAS")])
+  }
   g = ggplot(mydf, aes(x = X, y = Y, fill = G)) + 
     geom_point(size = 2.0, aes(color= G)) + 
     geom_smooth(method = "lm", aes(fill=G), color = "#4D4D4D") + 
@@ -507,6 +478,7 @@ for (i in 1:length(ggdf$MethSite)){
     scale_color_manual(values = c('#f58231')) +
     theme(line= element_blank()) + theme_bw(base_size = 11)
   plots[[i]] = g
+  
 }
 
 pdf("Fig2E_2.pdf", width = 2.8, height = 2.0) ## scatterplot DNA methylation total PFOS
@@ -574,11 +546,6 @@ results$fdr = p.adjust(results$p_value, method = "fdr")
 results2 = dplyr::filter(results, fdr < 0.06 )
 write.csv(results, "cpg_glm_results.csv", row.names = FALSE)
 
-#pdf("ScatterPlot_Experience_Methylation.pdf", width = 2.8, height = 2.0)
-#for(pl in plots){
-#  print(pl)
-#}
-#dev.off()
 
 ## check common sites ##
 results2 = dplyr::filter(results, p_value < 0.05 )
@@ -611,19 +578,18 @@ gene_ids <- AnnotationDbi::select(org.Hs.eg.db,
                                   keytype = "SYMBOL")
 write.table(gene_ids, file = "Gene_Description_Experience.tsv", sep="\t", quote = F, row.names = F)
 
-ggdf = read.table("Metascape_Exp.tsv", sep="\t", header = T)
+ggdf = read.table("IntermediateFiles/Metascape_Exp.tsv", sep="\t", header = T)
 ggdf$logQ = -1 * (ggdf$Log10.P.)
 notinsteringPathaways = c("Eosinophil count procedure","White Blood Cell Count procedure",
                           "Blood basophil count (lab test)", "Ankylosing spondylitis", "Corpuscular Hemoglobin Concentration Mean",
                           "Platelet Count measurement","Hyperplastic Polyp","Single umbilical artery")
 ggdf = ggdf[!ggdf$Description %in% notinsteringPathaways, ]
-pdf("SuppFig6D.pdf", height = 3.0, width = 8.8)
+pdf("SuppFig5C.pdf", height = 3.0, width = 8.8)
 ggplot(ggdf, aes(x = logQ, y = reorder(Description, logQ, decreasing = FALSE) , fill = logQ)) + 
   geom_bar(stat = "identity", width = 0.3) +
   geom_point(alpha=0.99, size = 3.0) + 
   theme_classic(base_size = 12) +
   scale_fill_continuous(type = "viridis", trans = 'reverse')
 dev.off()
-
 
 
