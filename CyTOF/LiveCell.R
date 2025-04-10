@@ -165,7 +165,7 @@ list.out = drawUMAP(df=subsample.expr[,lineage_markers], n_neighbors=15, min_dis
 ### Section-2 Plot clustering data with UMAP, Heatmap & box-plots ###
 ######################################################################
 
-load("Live_cells.RData")
+load("Data/Live_cells.RData")
 
 ### Heatmap ###
 lm = c("CD123", "CD11c","CD16", "CD3", "CD4", "CD45RA","TCRgd", "CD66b", "CD25", "CD56", "CD8a", "CD28","CD14", "CD127","CD19")
@@ -265,14 +265,6 @@ data$Batch  = md$Batch[mm]
 
 
 targetCls = setdiff(colnames(data),c("SampleID","cluster","Batch","sample_id"))
-normalized_dataSE <- as.data.frame(normalize.quantiles(as.matrix(SE[targetCls])))
-normalized_datanonSE <- as.data.frame(normalize.quantiles(as.matrix(nonSE[targetCls])))
-colnames(normalized_dataSE) = targetCls
-colnames(normalized_datanonSE) = targetCls
-data = rbind(normalized_dataSE,normalized_datanonSE)
-data$sample_id = SID
-data$cluster = clusters
-rm(SE, nonSE)
 
 ### Density Plot ###
 non_zeros_grouped <- data[,c(toxicMetals, "sample_id")] %>% group_by(sample_id) %>% summarise(across(everything(), ~ sum(. != 0), .names = "{col}"))
