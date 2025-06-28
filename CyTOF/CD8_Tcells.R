@@ -16,10 +16,9 @@ library(preprocessCore)
 
 dir.create("Data")
 
-###################################################################################################
-## Download CD8.Rdata and CD8_T_HandGated_subsets.RData files from Harvard Dataverse Repository ###
-## (URL: https://doi.org/10.7910/DVN/5PWZJM) in the 'Data' Directory #
-###########################################################################################
+#################################################################
+## Download .Rdata file from Harvard Dataverse Repository #######
+#################################################################
 
 md = read.csv("Files/FileInfoCD8.csv") ## Sample annotation 
 cd3 = read.csv("Files/CD3Pos_cell_counts.csv") ## CD3+ cell count per sample 
