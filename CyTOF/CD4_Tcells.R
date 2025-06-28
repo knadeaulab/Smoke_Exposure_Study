@@ -15,11 +15,6 @@ library(Biobase)
 
 dir.create("Data")
 
-###################################################################################################
-## Download CD4.Rdata and CD4_T_HandGated_subsets.RData files from Harvard Dataverse Repository ###
-## (URL: https://doi.org/10.7910/DVN/5PWZJM) in the 'Data' Directory #
-###########################################################################################
-
 md = read.csv("Files/FileInfoCD4.csv") ## Sample annotation 
 finalSamples = c("1294","1804","2765","2766","5023","5024","5865","5866","FF-024","WF046","WF135","FF-013",
                  "WF034","FF-035","FF-022","WF008","WF055","WF045","WF128","WF110","WF081","FF-052","FF-023",
