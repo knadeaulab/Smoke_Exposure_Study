@@ -16,10 +16,9 @@ library(preprocessCore)
 set.seed(123)
 dir.create("Data")
 
-############################################################################################
-## Download Bcell.Rdata and Bcells_HandGated_subsets.Rdata files from Harvard Dataverse ####
-## Repository (URL: https://doi.org/10.7910/DVN/5PWZJM) in the 'Data' Directory ############
-############################################################################################
+####################################################
+## Download .Rdata files from Harvard Dataverse ####
+####################################################
 
 md = read.csv("Files/FileInfoBcells.csv") ## Sample annotation 
 cd3 = read.csv("Files/CD3neg_cell_count.csv") ## CD3- cell count per sample 
