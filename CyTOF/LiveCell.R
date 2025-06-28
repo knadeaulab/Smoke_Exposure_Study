@@ -18,11 +18,9 @@ library(preprocessCore)
 set.seed(123)
 dir.create("Data")
 
-###########################################################################################
-## Download Live cell FCS files from Harvard Dataverse Repository in the 'Data' Directory #
-## Rsession: Live_cells.Rdata
-## URL: https://doi.org/10.7910/DVN/5PWZJM,
-###########################################################################################
+#########################################################################################################
+## Download Live cell FCS files and R-session from Harvard Dataverse Repository in the 'Data' Directory #
+#########################################################################################################
 ## NOTE: To reproduce the results. We will use R session file which contains exactly the same 
 ## randomly selected subset of cells used in the study. However, I have also included R codes 
 ## I used to produce the variables available in Rsession file. 
