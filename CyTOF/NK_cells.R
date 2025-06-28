@@ -15,10 +15,9 @@ library(Biobase)
 library(preprocessCore)
 dir.create("Data")
 
-############################################################################################
-## Download NKcells_Handgated_subsets.Rdata file from Harvard Dataverse Repository #########
-## (URL: https://doi.org/10.7910/DVN/5PWZJM) in the 'Data' Directory #
-###########################################################################################
+#################################################################
+## Download .Rdata file from Harvard Dataverse Repository #######
+#################################################################
 
 md = read.csv("Files/FileInfoNKcells.csv") ## Sample annotation 
 finalSamples = c("1294","1804","2765","2766","5023","5024","5865","5866","FF-024","WF046","WF135","FF-013",
