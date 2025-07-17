@@ -16,9 +16,7 @@ library(preprocessCore)
 set.seed(123)
 dir.create("Data")
 
-####################################################
-## Download .Rdata files from Harvard Dataverse ####
-####################################################
+
 
 md = read.csv("Files/FileInfoBcells.csv") ## Sample annotation 
 cd3 = read.csv("Files/CD3neg_cell_count.csv") ## CD3- cell count per sample 
