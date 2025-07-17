@@ -19,10 +19,6 @@ library(Biobase)
 set.seed(123)
 dir.create("Data")
 
-#################################################################
-## Download .Rdata file from Harvard Dataverse Repository #######
-#################################################################
-
 md = read.csv("Files/FileInfoCD11cpos.csv") ## Sample annotation 
 cd3 = read.csv("Files/CD3neg_cell_count.csv") ## CD3- cell count per sample 
 finalSamples = c("1294","1804","2765","2766","5023","5024","5865","5866","FF-024","WF046","WF135","FF-013",
