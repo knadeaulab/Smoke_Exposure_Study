@@ -15,8 +15,6 @@ This repository provides the necessary R scripts, data, and intermediate files f
   - `B_cell.R` - Main analysis R script for analyzing handgated CD19+ B cells.
 - **Files/**
   - Metadata and additional CSV/Tab-delimited files for replication of results presented in this study.
-## Instructions
-The up-to-date instructions to download associated raw/processed data are available within the each R script.
 ## Contact
 For questions, please contact Abhinav Kaushik at akaushik [at] hsph.harvard.edu
 
