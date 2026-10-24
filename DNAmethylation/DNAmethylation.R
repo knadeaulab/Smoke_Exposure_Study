@@ -53,6 +53,7 @@ design <- model.matrix(~ eSet$Group + eSet$Race2 + eSet$Batch_number)
 fit <- lmFit(eSet, design)
 fit <- eBayes(fit)
 res = topTable(fit, n = Inf)
+# Significance was assessed with limma’s omnibus F-test, which jointly tests whether the fitted model explains methylation variation relative to residual (background) variability.
 res$logFC = res$eSet.Group1
 ## volcano plot 
 vp = EnhancedVolcano::EnhancedVolcano(toptable = res, x = 'logFC', y = 'adj.P.Val', lab = rownames(res), 
@@ -167,27 +168,6 @@ gene_ids <- AnnotationDbi::select(org.Hs.eg.db,
                                   keytype = "SYMBOL")
 write.table(gene_ids, file = "TableS1.tsv", sep="\t", quote = F, row.names = F)
 
-### Enrichment Analysis: adj.P.Val < 0.001 ###
-res_sig = dplyr::filter(res, adj.P.Val < 0.005 ) # using only q < 0.01 as threshold #
-mm = match(rownames(res_sig), df_dm_annotated$probes)
-res_sig$chr = df_dm_annotated$seqnames[mm]
-res_sig$start = df_dm_annotated$start[mm]
-res_sig$end = df_dm_annotated$end[mm]
-a = res_sig[,c("chr", "start", "end")] ## foreground for new pathway analysis 
-colnames(a) = NULL
-write.table(a, file = "significantSite_2.bed", sep="\t", quote = F, row.names = F)
-## the above file was also used as input for http://great.stanford.edu/public/html/index.php
-## from the result page of GREAT, I extracted the region-geneID association excel file- GREAT_output_association_table.xlsx
-GL1 = read.table("IntermediateFiles/DataF2D.txt", sep="\t")
-# Here is the output of GREAT, lets see names of the genes
-gene_ids <- AnnotationDbi::select(org.Hs.eg.db, 
-                                  keys = GL1$V1, 
-                                  columns = c("GENENAME"), 
-                                  keytype = "SYMBOL")
-write.table(gene_ids, file = "DataFile-S02.tsv", sep="\t", quote = F, row.names = F)
-
-#### Section-6: upload gene list from association file to metascape (https://metascape.org/gp/index.html)  ####
-write.table(file="CpGassociatedGenes4Metascape.txt", GL$V1, quote = F, row.names = F)
 write.table(file="CpGassociatedGenes4Metascape_withQ_less_than_0.05.txt", GL1$V1, quote = F, row.names = F)
 
 ## Upload the gene list (abs(log FC) > 0.5 & q < 0.2) to Metascape pathway analysis software and download the Summary of enrichment analysis 
@@ -195,22 +175,6 @@ ggdf = read.table("IntermediateFiles/Metascape_1.tsv", sep="\t", header = T)
 ggdf$logQ = -1 * (ggdf$Log10.P.)
 
 pdf("Fig2C.pdf", height = 4, width = 8)
-ggplot(ggdf, aes(x = logQ, y = reorder(Description, logQ, decreasing = FALSE) , fill = logQ)) + 
-  geom_bar(stat = "identity", width = 0.3) +
-  geom_point(alpha=0.99, size = 3.0) + 
-  theme_classic(base_size = 12) +
-  scale_fill_continuous(type = "viridis", trans = 'reverse')
-dev.off()
-
-## Upload the gene list (q < 0.005) to Metascape pathway analysis software and download the Summary of enrichment analysis in DisGeNET as TSV file 
-ggdf = read.table("IntermediateFiles/Metascape_2.tsv", sep="\t", header = T)
-ggdf$logQ = -1 * (ggdf$Log10.P.)
-insteringPathaways = c("Allergic Reaction","Adult onset asthma","Squamous cell carcinoma of lung","Juvenile arthritis",
-                       "Graves Disease","Primary biliary cirrhosis","Allergic rhinitis (disorder)",
-                       "Hypothyroidism","Respiratory Tract Diseases","Autoimmune thyroid disease (AITD)","Cholangitis, Sclerosing")
-ggdf = ggdf[ggdf$Description %in% insteringPathaways, ]
-
-pdf("Fig2D.pdf", height = 2.5, width = 5.8)
 ggplot(ggdf, aes(x = logQ, y = reorder(Description, logQ, decreasing = FALSE) , fill = logQ)) + 
   geom_bar(stat = "identity", width = 0.3) +
   geom_point(alpha=0.99, size = 3.0) + 
